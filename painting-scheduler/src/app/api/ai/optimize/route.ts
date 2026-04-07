@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
         try {
           ctrl.enqueue(enc.encode(JSON.stringify({ type: "status", data: "天気データを分析中..." }) + "\n"));
           const res = await client.messages.create({
-            model: "claude-sonnet-4-6-20250514", max_tokens: 4096, system: getSystemPrompt(),
+            model: "claude-sonnet-4-5-20241022", max_tokens: 4096, system: getSystemPrompt(),
             messages: [{ role: "user", content: getOptimizeUserPrompt(site, processes, weather) }], stream: true,
           });
           let full = ""; let sentStatus = false;
