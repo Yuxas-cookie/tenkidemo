@@ -20,45 +20,51 @@ export function ImpactSummary({
   const lastEnd = processes[processes.length - 1]?.scheduledEnd;
   const totalDays = firstStart && lastEnd ? getDaysBetween(firstStart, lastEnd) : 0;
 
-  // Count non-workable days within the schedule range
   const weatherImpactDays = weatherDays.filter((d) => {
     if (!firstStart || !lastEnd) return false;
     return d.date >= firstStart && d.date <= lastEnd && !d.canWork;
   }).length;
 
-  // Estimate cost impact (simplified: 15,000 yen/day for house, scaled by area)
   const dailyCost = Math.round((paintArea / 150) * 1.5);
   const estimatedExtraCost = weatherImpactDays * dailyCost;
 
   const stats = [
     {
       label: "予定工期",
-      value: `${totalDays}日`,
+      value: `${totalDays}`,
+      unit: "日",
+      icon: "📅",
       color: "text-blue-600",
-      bg: "bg-blue-50",
+      bg: "bg-blue-50 border-blue-100",
     },
     {
       label: "天候影響",
-      value: `${weatherImpactDays}日`,
+      value: `${weatherImpactDays}`,
+      unit: "日",
+      icon: "🌧️",
       color: weatherImpactDays > 0 ? "text-amber-600" : "text-green-600",
-      bg: weatherImpactDays > 0 ? "bg-amber-50" : "bg-green-50",
+      bg: weatherImpactDays > 0 ? "bg-amber-50 border-amber-100" : "bg-green-50 border-green-100",
     },
     {
       label: "予想遅延",
-      value: `${weatherImpactDays}日`,
+      value: `${weatherImpactDays}`,
+      unit: "日",
+      icon: "⏱️",
       color: weatherImpactDays > 0 ? "text-red-600" : "text-green-600",
-      bg: weatherImpactDays > 0 ? "bg-red-50" : "bg-green-50",
+      bg: weatherImpactDays > 0 ? "bg-red-50 border-red-100" : "bg-green-50 border-green-100",
     },
     {
       label: "追加コスト概算",
-      value: estimatedExtraCost > 0 ? `約${estimatedExtraCost}万円` : "なし",
+      value: estimatedExtraCost > 0 ? `${estimatedExtraCost}` : "0",
+      unit: "万円",
+      icon: "💰",
       color: estimatedExtraCost > 0 ? "text-red-600" : "text-green-600",
-      bg: estimatedExtraCost > 0 ? "bg-red-50" : "bg-green-50",
+      bg: estimatedExtraCost > 0 ? "bg-red-50 border-red-100" : "bg-green-50 border-green-100",
     },
   ];
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
       {stats.map((stat, i) => (
         <motion.div
           key={stat.label}
@@ -66,10 +72,14 @@ export function ImpactSummary({
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, delay: i * 0.1 }}
         >
-          <Card className={stat.bg}>
-            <CardContent className="p-4 text-center">
-              <p className="text-xs text-gray-500 mb-1">{stat.label}</p>
-              <p className={`text-lg font-bold ${stat.color}`}>{stat.value}</p>
+          <Card className={`${stat.bg} border-2`}>
+            <CardContent className="p-5 text-center">
+              <span className="text-2xl">{stat.icon}</span>
+              <p className="text-sm text-gray-500 mt-2 mb-1">{stat.label}</p>
+              <p className={`text-3xl font-bold ${stat.color}`}>
+                {stat.value}
+                <span className="text-base font-medium ml-1">{stat.unit}</span>
+              </p>
             </CardContent>
           </Card>
         </motion.div>

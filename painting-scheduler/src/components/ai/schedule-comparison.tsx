@@ -32,29 +32,30 @@ export function ScheduleComparison({
       : 0;
 
   const riskColors = {
-    low: "text-green-600 bg-green-50",
-    medium: "text-amber-600 bg-amber-50",
-    high: "text-red-600 bg-red-50",
+    low: "text-green-600 bg-green-50 border-green-200",
+    medium: "text-amber-600 bg-amber-50 border-amber-200",
+    high: "text-red-600 bg-red-50 border-red-200",
   };
   const riskLabels = { low: "低", medium: "中", high: "高" };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Summary stats */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
-        className="grid grid-cols-2 sm:grid-cols-4 gap-3"
+        className="grid grid-cols-2 sm:grid-cols-4 gap-4"
       >
         <StatCard
+          icon="📅"
           label="工期変更"
           value={`${originalDays}日 → ${optimizedDays}日`}
           sub={
             result.impactDays > 0
-              ? `+${result.impactDays}日`
+              ? `+${result.impactDays}日延長`
               : result.impactDays < 0
-                ? `${result.impactDays}日`
+                ? `${result.impactDays}日短縮`
                 : "変更なし"
           }
           subColor={
@@ -66,6 +67,7 @@ export function ScheduleComparison({
           }
         />
         <StatCard
+          icon="💰"
           label="追加コスト"
           value={
             result.impactCost > 0 ? `約${result.impactCost}万円` : "なし"
@@ -74,13 +76,15 @@ export function ScheduleComparison({
           subColor="text-gray-500"
         />
         <StatCard
+          icon="⚡"
           label="リスク"
           value={riskLabels[result.riskLevel]}
           sub=""
           subColor={riskColors[result.riskLevel]}
-          valueClassName={riskColors[result.riskLevel]}
+          valueClassName={`${riskColors[result.riskLevel]} border-2 rounded-full px-4 py-1 inline-block`}
         />
         <StatCard
+          icon="✨"
           label="変更工程数"
           value={`${result.suggestions.length}件`}
           sub="AI提案"
@@ -94,31 +98,31 @@ export function ScheduleComparison({
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, delay: 0.1 }}
       >
-        <Card className="border-purple-200 bg-purple-50/50">
-          <CardContent className="p-4">
-            <div className="flex items-start gap-2">
-              <span className="text-lg">✨</span>
-              <p className="text-sm text-gray-700">{result.summary}</p>
+        <Card className="border-2 border-purple-200 bg-gradient-to-br from-purple-50 to-white">
+          <CardContent className="p-6">
+            <div className="flex items-start gap-4">
+              <span className="text-3xl">✨</span>
+              <p className="text-lg text-gray-700 leading-relaxed">{result.summary}</p>
             </div>
           </CardContent>
         </Card>
       </motion.div>
 
       {/* Before/After comparison */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <motion.div
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.4, delay: 0.2 }}
         >
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm flex items-center gap-2">
-                <span className="h-3 w-3 rounded-full bg-gray-400" />
+          <Card className="border-2">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center gap-3">
+                <span className="h-4 w-4 rounded-full bg-gray-400" />
                 変更前スケジュール
               </CardTitle>
             </CardHeader>
-            <CardContent className="p-3">
+            <CardContent className="p-4">
               <GanttChart
                 processes={result.originalSchedule}
                 weatherDays={weatherDays}
@@ -133,17 +137,17 @@ export function ScheduleComparison({
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.4, delay: 0.3 }}
         >
-          <Card className="border-purple-200">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm flex items-center gap-2">
-                <span className="h-3 w-3 rounded-full bg-purple-400" />
+          <Card className="border-2 border-purple-200 shadow-lg shadow-purple-100/50">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center gap-3">
+                <span className="h-4 w-4 rounded-full bg-purple-400" />
                 AI最適化後スケジュール
-                <span className="text-[10px] bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded-full">
+                <span className="text-xs bg-purple-100 text-purple-700 px-2.5 py-1 rounded-full font-semibold border border-purple-200">
                   ✨ AI
                 </span>
               </CardTitle>
             </CardHeader>
-            <CardContent className="p-3">
+            <CardContent className="p-4">
               <GanttChart
                 processes={result.optimizedSchedule}
                 weatherDays={weatherDays}
@@ -158,12 +162,14 @@ export function ScheduleComparison({
 }
 
 function StatCard({
+  icon,
   label,
   value,
   sub,
   subColor,
   valueClassName,
 }: {
+  icon: string;
   label: string;
   value: string;
   sub: string;
@@ -171,17 +177,16 @@ function StatCard({
   valueClassName?: string;
 }) {
   return (
-    <Card>
-      <CardContent className="p-3 text-center">
-        <p className="text-xs text-gray-500 mb-1">{label}</p>
+    <Card className="border-2">
+      <CardContent className="p-5 text-center">
+        <span className="text-2xl">{icon}</span>
+        <p className="text-sm text-gray-500 mt-2 mb-1">{label}</p>
         <p
-          className={`text-sm font-bold ${valueClassName || "text-gray-900"} ${
-            valueClassName?.includes("bg-") ? "rounded-full px-2 py-0.5 inline-block" : ""
-          }`}
+          className={`text-lg font-bold ${valueClassName || "text-gray-900"}`}
         >
           {value}
         </p>
-        {sub && <p className={`text-xs mt-0.5 ${subColor}`}>{sub}</p>}
+        {sub && <p className={`text-sm mt-1 font-medium ${subColor}`}>{sub}</p>}
       </CardContent>
     </Card>
   );

@@ -30,48 +30,50 @@ export function SimulationView({ site }: SimulationViewProps) {
   };
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 space-y-6">
+    <div className="mx-auto max-w-7xl px-6 py-8 space-y-8">
       {/* Breadcrumb */}
-      <nav className="flex items-center gap-2 text-sm text-gray-500">
+      <nav className="flex items-center gap-2 text-base text-gray-500">
         <Link href="/" className="hover:text-blue-600 transition-colors">
           ダッシュボード
         </Link>
-        <span>/</span>
+        <span className="text-gray-300">/</span>
         <Link
           href={`/sites/${site.id}`}
           className="hover:text-blue-600 transition-colors"
         >
           {site.name}
         </Link>
-        <span>/</span>
-        <span className="text-gray-900 font-medium">AIシミュレーション</span>
+        <span className="text-gray-300">/</span>
+        <span className="text-gray-900 font-semibold">AIシミュレーション</span>
       </nav>
 
-      {/* Site summary */}
+      {/* Site summary hero */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
       >
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <span className="text-2xl">
-                {getBuildingTypeIcon(site.buildingType)}
-              </span>
-              <div>
-                <h2 className="font-bold text-gray-900">{site.name}</h2>
-                <p className="text-xs text-gray-500">
-                  {site.address} | 開始: {formatDateFull(site.startDate)} |{" "}
-                  {site.paintArea}m²
-                </p>
+        <Card className="overflow-hidden">
+          <div className="bg-gradient-to-r from-purple-600 via-purple-700 to-blue-700 p-6 sm:p-8">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <span className="text-5xl">
+                  {getBuildingTypeIcon(site.buildingType)}
+                </span>
+                <div>
+                  <h2 className="text-2xl font-bold text-white">{site.name}</h2>
+                  <p className="text-purple-100 text-base mt-1">
+                    {site.address} | 開始: {formatDateFull(site.startDate)} |{" "}
+                    {site.paintArea}m²
+                  </p>
+                </div>
               </div>
               {weatherMode.mode === "demo" && (
-                <span className="ml-auto text-xs bg-amber-100 text-amber-700 px-2 py-1 rounded-full">
+                <span className="text-sm bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-full border border-white/30 font-medium">
                   デモモード
                 </span>
               )}
             </div>
-          </CardContent>
+          </div>
         </Card>
       </motion.div>
 
@@ -82,9 +84,13 @@ export function SimulationView({ site }: SimulationViewProps) {
         transition={{ delay: 0.1 }}
       >
         <Tabs defaultValue="optimize">
-          <TabsList className="mb-4">
-            <TabsTrigger value="optimize">事前シミュレーション</TabsTrigger>
-            <TabsTrigger value="reschedule">緊急リスケ</TabsTrigger>
+          <TabsList className="mb-6">
+            <TabsTrigger value="optimize" className="text-base px-6 py-2.5">
+              事前シミュレーション
+            </TabsTrigger>
+            <TabsTrigger value="reschedule" className="text-base px-6 py-2.5">
+              緊急リスケ
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="optimize">
@@ -133,24 +139,24 @@ function SimulationPanel({
   weatherDays: WeatherDay[];
 }) {
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Description + Run button */}
       {simulation.state === "idle" && (
-        <Card>
+        <Card className="border-2 border-dashed border-purple-200 bg-purple-50/30">
           <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <span className="text-xl">✨</span>
+            <CardTitle className="text-2xl flex items-center gap-3">
+              <span className="text-3xl">✨</span>
               {title}
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <p className="text-sm text-gray-600">{description}</p>
+          <CardContent className="space-y-6">
+            <p className="text-lg text-gray-600 leading-relaxed">{description}</p>
             <Button
               onClick={onRun}
-              className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white shadow-lg gap-2"
+              className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white shadow-xl shadow-purple-200/50 gap-3 text-lg px-10 py-7 rounded-xl"
               size="lg"
             >
-              <span className="text-lg">✨</span>
+              <span className="text-2xl">✨</span>
               {buttonLabel}
             </Button>
           </CardContent>
@@ -159,8 +165,8 @@ function SimulationPanel({
 
       {/* Thinking state */}
       {simulation.state === "thinking" && (
-        <Card>
-          <CardContent className="p-6">
+        <Card className="border-2 border-purple-200">
+          <CardContent className="p-8">
             <ThinkingAnimation statusMessage={simulation.statusMessage} />
           </CardContent>
         </Card>
@@ -181,7 +187,7 @@ function SimulationPanel({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.5 }}
-          className="space-y-6"
+          className="space-y-8"
         >
           <ScheduleComparison
             result={simulation.result}
@@ -191,10 +197,10 @@ function SimulationPanel({
           {/* Suggestion cards */}
           {simulation.result.suggestions.length > 0 && (
             <div>
-              <h3 className="text-lg font-bold text-gray-900 mb-3 flex items-center gap-2">
-                <span>✨</span> AI提案
+              <h3 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-3">
+                <span className="text-2xl">✨</span> AI提案
               </h3>
-              <div className="space-y-3">
+              <div className="space-y-4">
                 {simulation.result.suggestions.map((suggestion, i) => (
                   <SuggestionCard
                     key={`${suggestion.processId}-${suggestion.type}`}
@@ -207,8 +213,8 @@ function SimulationPanel({
           )}
 
           {/* Reset button */}
-          <div className="flex justify-center">
-            <Button variant="outline" onClick={simulation.reset}>
+          <div className="flex justify-center pt-4">
+            <Button variant="outline" size="lg" className="text-base px-8 py-6 rounded-xl" onClick={simulation.reset}>
               もう一度実行する
             </Button>
           </div>
@@ -217,14 +223,15 @@ function SimulationPanel({
 
       {/* Error state */}
       {simulation.state === "error" && (
-        <Card className="border-red-200 bg-red-50">
-          <CardContent className="p-4">
-            <p className="text-sm text-red-600">
+        <Card className="border-2 border-red-200 bg-red-50">
+          <CardContent className="p-6">
+            <p className="text-base text-red-600 font-medium">
               エラーが発生しました: {simulation.error}
             </p>
             <Button
               variant="outline"
-              className="mt-3"
+              className="mt-4"
+              size="lg"
               onClick={simulation.reset}
             >
               リトライ

@@ -7,13 +7,6 @@ interface ThinkingAnimationProps {
   statusMessage: string;
 }
 
-const thinkingSteps = [
-  "AIが天気データを分析中...",
-  "工程の依存関係を確認中...",
-  "最適スケジュールを計算中...",
-  "提案を生成中...",
-];
-
 export function ThinkingAnimation({ statusMessage }: ThinkingAnimationProps) {
   const [dotCount, setDotCount] = useState(0);
 
@@ -24,19 +17,19 @@ export function ThinkingAnimation({ statusMessage }: ThinkingAnimationProps) {
     return () => clearInterval(interval);
   }, []);
 
-  const displayMessage = statusMessage || thinkingSteps[0];
+  const displayMessage = statusMessage || "AIが天気データを分析中...";
 
   return (
-    <div className="flex flex-col items-center justify-center py-12 space-y-6">
+    <div className="flex flex-col items-center justify-center py-16 space-y-8">
       {/* Pulsing AI icon */}
       <div className="relative">
         <motion.div
-          className="flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-purple-500 to-blue-500 text-3xl text-white shadow-lg"
+          className="flex h-28 w-28 items-center justify-center rounded-full bg-gradient-to-br from-purple-500 via-purple-600 to-blue-600 text-5xl text-white shadow-2xl shadow-purple-300/50"
           animate={{
-            scale: [1, 1.1, 1],
+            scale: [1, 1.08, 1],
             boxShadow: [
               "0 0 0 0 rgba(147, 51, 234, 0.4)",
-              "0 0 0 20px rgba(147, 51, 234, 0)",
+              "0 0 0 30px rgba(147, 51, 234, 0)",
               "0 0 0 0 rgba(147, 51, 234, 0)",
             ],
           }}
@@ -49,18 +42,18 @@ export function ThinkingAnimation({ statusMessage }: ThinkingAnimationProps) {
         {[0, 1, 2].map((i) => (
           <motion.div
             key={i}
-            className="absolute h-3 w-3 rounded-full bg-purple-400"
+            className="absolute h-4 w-4 rounded-full bg-purple-400 shadow-lg shadow-purple-300/50"
             style={{ top: "50%", left: "50%" }}
             animate={{
               x: [
-                Math.cos((i * 2 * Math.PI) / 3) * 40,
-                Math.cos((i * 2 * Math.PI) / 3 + Math.PI) * 40,
-                Math.cos((i * 2 * Math.PI) / 3 + 2 * Math.PI) * 40,
+                Math.cos((i * 2 * Math.PI) / 3) * 55,
+                Math.cos((i * 2 * Math.PI) / 3 + Math.PI) * 55,
+                Math.cos((i * 2 * Math.PI) / 3 + 2 * Math.PI) * 55,
               ],
               y: [
-                Math.sin((i * 2 * Math.PI) / 3) * 40,
-                Math.sin((i * 2 * Math.PI) / 3 + Math.PI) * 40,
-                Math.sin((i * 2 * Math.PI) / 3 + 2 * Math.PI) * 40,
+                Math.sin((i * 2 * Math.PI) / 3) * 55,
+                Math.sin((i * 2 * Math.PI) / 3 + Math.PI) * 55,
+                Math.sin((i * 2 * Math.PI) / 3 + 2 * Math.PI) * 55,
               ],
               opacity: [0.6, 1, 0.6],
             }}
@@ -74,7 +67,7 @@ export function ThinkingAnimation({ statusMessage }: ThinkingAnimationProps) {
         ))}
       </div>
 
-      {/* Status message with typewriter effect */}
+      {/* Status message */}
       <AnimatePresence mode="wait">
         <motion.div
           key={displayMessage}
@@ -84,17 +77,17 @@ export function ThinkingAnimation({ statusMessage }: ThinkingAnimationProps) {
           transition={{ duration: 0.3 }}
           className="text-center"
         >
-          <p className="text-lg font-medium text-gray-700">
+          <p className="text-2xl font-bold text-gray-700">
             {displayMessage}
           </p>
-          <p className="text-sm text-gray-400 mt-1">
+          <p className="text-lg text-gray-400 mt-2">
             {".".repeat(dotCount + 1)}
           </p>
         </motion.div>
       </AnimatePresence>
 
       {/* Progress bar */}
-      <div className="w-64 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+      <div className="w-80 h-2 bg-gray-200 rounded-full overflow-hidden">
         <motion.div
           className="h-full bg-gradient-to-r from-purple-500 to-blue-500 rounded-full"
           animate={{ x: ["-100%", "100%"] }}

@@ -18,16 +18,16 @@ export function WeatherModeSwitch() {
   const isDemo = weatherMode.mode === "demo";
 
   return (
-    <div className="flex items-center gap-4">
-      <div className="flex items-center gap-2">
-        <span className={`text-xs font-medium ${!isDemo ? "text-blue-600" : "text-gray-400"}`}>
+    <div className="flex items-center gap-5">
+      <div className="flex items-center gap-3">
+        <span className={`text-sm font-semibold ${!isDemo ? "text-white" : "text-white/50"}`}>
           リアル
         </span>
         <Switch
           checked={isDemo}
           onCheckedChange={(checked) => setMode(checked ? "demo" : "real")}
         />
-        <span className={`text-xs font-medium ${isDemo ? "text-purple-600" : "text-gray-400"}`}>
+        <span className={`text-sm font-semibold ${isDemo ? "text-white" : "text-white/50"}`}>
           デモ
         </span>
       </div>
@@ -44,13 +44,13 @@ export function WeatherModeSwitch() {
               value={weatherMode.scenario}
               onValueChange={(v) => setScenario(v as WeatherScenario)}
             >
-              <SelectTrigger className="h-8 w-[180px] text-xs">
+              <SelectTrigger className="h-10 w-[200px] text-sm bg-white/90 border-white/30">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 {(Object.keys(scenarioLabels) as WeatherScenario[]).map((key) => (
-                  <SelectItem key={key} value={key} className="text-xs">
-                    <span className="font-medium">{scenarioLabels[key].name}</span>
+                  <SelectItem key={key} value={key} className="text-sm py-2">
+                    <span className="font-semibold">{scenarioLabels[key].name}</span>
                     <span className="ml-2 text-gray-400">{scenarioLabels[key].description}</span>
                   </SelectItem>
                 ))}

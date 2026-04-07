@@ -54,7 +54,7 @@ export function WeatherAlertBanner({ days, sites }: WeatherAlertBannerProps) {
         initial={{ opacity: 0, height: 0 }}
         animate={{ opacity: 1, height: "auto" }}
         exit={{ opacity: 0, height: 0 }}
-        className="space-y-2"
+        className="space-y-3"
       >
         {alerts.map((alert, i) => (
           <motion.div
@@ -62,13 +62,13 @@ export function WeatherAlertBanner({ days, sites }: WeatherAlertBannerProps) {
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: i * 0.15 }}
-            className="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-3"
+            className="flex items-start gap-4 rounded-xl border-2 border-amber-200 bg-amber-50 p-5 shadow-sm shadow-amber-100/50"
           >
-            <div className="flex items-center gap-2 shrink-0">
-              <span className="text-lg">{getWeatherEmoji(alert.weather.weather)}</span>
-              <div className="flex h-6 w-6 items-center justify-center rounded-full bg-amber-100">
+            <div className="flex items-center gap-3 shrink-0">
+              <span className="text-3xl">{getWeatherEmoji(alert.weather.weather)}</span>
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-100">
                 <svg
-                  className="h-4 w-4 text-amber-600"
+                  className="h-6 w-6 text-amber-600"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -83,14 +83,14 @@ export function WeatherAlertBanner({ days, sites }: WeatherAlertBannerProps) {
               </div>
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-amber-800">
+              <p className="text-base font-bold text-amber-800">
                 {formatDateFull(alert.date)} — 天候による影響あり
               </p>
-              <div className="mt-1 flex flex-wrap gap-1">
+              <div className="mt-2 flex flex-wrap gap-2">
                 {alert.affectedSites.map((a, j) => (
                   <span
                     key={j}
-                    className="inline-flex items-center rounded-md bg-amber-100 px-2 py-0.5 text-xs text-amber-700"
+                    className="inline-flex items-center rounded-lg bg-amber-100 border border-amber-200 px-3 py-1.5 text-sm font-medium text-amber-700"
                   >
                     {a.siteName} / {a.processName}
                   </span>

@@ -37,16 +37,16 @@ function getRainToleranceIcon(tolerance: string) {
 }
 
 function getBarColor(status: string, aiModified?: boolean) {
-  if (aiModified) return "bg-purple-400";
+  if (aiModified) return "bg-gradient-to-r from-purple-400 to-purple-500";
   switch (status) {
     case "completed":
-      return "bg-green-400";
+      return "bg-gradient-to-r from-green-400 to-green-500";
     case "in_progress":
-      return "bg-blue-400";
+      return "bg-gradient-to-r from-blue-400 to-blue-500";
     case "weather_hold":
-      return "bg-amber-400";
+      return "bg-gradient-to-r from-amber-400 to-amber-500";
     default:
-      return "bg-gray-300";
+      return "bg-gradient-to-r from-gray-300 to-gray-400";
   }
 }
 
@@ -55,8 +55,7 @@ export function GanttChart({
   weatherDays,
   compact = false,
 }: GanttChartProps) {
-  const { dateRange, dateToCol, totalCols } = useMemo(() => {
-    // Find the date range from processes
+  const { dateRange, dateToCol } = useMemo(() => {
     let minDate = new Date("2099-12-31");
     let maxDate = new Date("2000-01-01");
 
@@ -67,7 +66,6 @@ export function GanttChart({
       if (end > maxDate) maxDate = end;
     }
 
-    // Add buffer
     minDate.setDate(minDate.getDate() - 1);
     maxDate.setDate(maxDate.getDate() + 2);
 
@@ -84,7 +82,6 @@ export function GanttChart({
     return {
       dateRange: dates,
       dateToCol: (date: string) => colMap.get(date) ?? 0,
-      totalCols: dates.length,
     };
   }, [processes]);
 
@@ -96,19 +93,19 @@ export function GanttChart({
     return map;
   }, [weatherDays]);
 
-  const labelWidth = compact ? "min-w-[140px]" : "min-w-[200px]";
-  const colWidth = compact ? "min-w-[36px]" : "min-w-[48px]";
-  const rowHeight = compact ? "h-8" : "h-10";
+  const labelWidth = compact ? "min-w-[150px]" : "min-w-[220px]";
+  const colWidth = compact ? "min-w-[40px]" : "min-w-[56px]";
+  const rowHeight = compact ? "h-10" : "h-14";
 
   return (
     <ScrollArea className="w-full">
       <div className="min-w-fit">
         {/* Date header */}
-        <div className="flex border-b border-gray-200">
+        <div className="flex border-b-2 border-gray-200">
           <div
-            className={`${labelWidth} shrink-0 border-r border-gray-200 p-2`}
+            className={`${labelWidth} shrink-0 border-r-2 border-gray-200 p-3`}
           >
-            <span className="text-xs font-medium text-gray-500">工程</span>
+            <span className="text-sm font-bold text-gray-600">工程名</span>
           </div>
           <div className="flex">
             {dateRange.map((date) => {
@@ -117,15 +114,15 @@ export function GanttChart({
               return (
                 <div
                   key={date}
-                  className={`${colWidth} shrink-0 text-center border-r border-gray-100 p-1 ${
+                  className={`${colWidth} shrink-0 text-center border-r border-gray-100 py-2 ${
                     !canWork ? "bg-red-50" : ""
                   }`}
                 >
-                  <div className="text-[10px] text-gray-400">
+                  <div className="text-xs font-medium text-gray-500">
                     {formatDate(date)}
                   </div>
                   {weather && (
-                    <div className="text-xs leading-none">
+                    <div className={`${compact ? "text-sm" : "text-lg"} leading-none mt-0.5`}>
                       {getWeatherEmoji(weather.weather)}
                     </div>
                   )}
@@ -144,26 +141,26 @@ export function GanttChart({
           return (
             <motion.div
               key={process.id}
-              className="flex border-b border-gray-100"
+              className="flex border-b border-gray-100 hover:bg-gray-50/50 transition-colors"
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.3, delay: i * 0.05 }}
             >
               {/* Label */}
               <div
-                className={`${labelWidth} shrink-0 border-r border-gray-200 p-2 flex items-center gap-1.5`}
+                className={`${labelWidth} shrink-0 border-r-2 border-gray-200 p-3 flex items-center gap-2`}
               >
-                <span className="text-xs">
+                <span className={compact ? "text-sm" : "text-base"}>
                   {getRainToleranceIcon(process.rainTolerance)}
                 </span>
                 <span
-                  className={`text-xs font-medium text-gray-700 truncate ${compact ? "max-w-[100px]" : ""}`}
+                  className={`${compact ? "text-xs" : "text-sm"} font-semibold text-gray-700 truncate`}
                 >
                   {process.name}
                 </span>
                 {!compact && (
                   <Badge
-                    className={`${getStatusColor(process.status)} text-[10px] px-1.5 py-0 ml-auto shrink-0`}
+                    className={`${getStatusColor(process.status)} text-[11px] px-2 py-0.5 ml-auto shrink-0`}
                     variant="secondary"
                   >
                     {getStatusLabel(process.status)}
@@ -173,7 +170,6 @@ export function GanttChart({
 
               {/* Timeline */}
               <div className={`flex relative ${rowHeight}`}>
-                {/* Background columns with weather highlight */}
                 {dateRange.map((date) => {
                   const weather = weatherMap.get(date);
                   const canWork = weather?.canWork ?? true;
@@ -190,30 +186,30 @@ export function GanttChart({
                 {/* Process bar */}
                 <Tooltip>
                   <TooltipTrigger
-                    className={`absolute top-1.5 ${compact ? "h-5" : "h-7"} rounded-md ${getBarColor(process.status, process.aiModified)} shadow-sm cursor-pointer flex items-center px-2`}
+                    className={`absolute ${compact ? "top-2 h-6" : "top-2 h-10"} rounded-lg ${getBarColor(process.status, process.aiModified)} shadow-md cursor-pointer flex items-center px-3 hover:brightness-110 transition-all`}
                     style={{
-                      left: `calc(${startCol} * ${compact ? "36px" : "48px"})`,
-                      width: `calc(${span} * ${compact ? "36px" : "48px"} - 4px)`,
+                      left: `calc(${startCol} * ${compact ? "40px" : "56px"})`,
+                      width: `calc(${span} * ${compact ? "40px" : "56px"} - 4px)`,
                     }}
                   >
                     {!compact && (
-                      <span className="text-[10px] text-white font-medium truncate">
+                      <span className="text-xs text-white font-semibold truncate">
                         {process.name}
                       </span>
                     )}
                     {process.aiModified && (
-                      <span className="ml-auto text-[10px]">✨</span>
+                      <span className="ml-auto text-sm">✨</span>
                     )}
                   </TooltipTrigger>
                   <TooltipContent side="top" className="max-w-xs">
-                    <div className="space-y-1">
-                      <p className="font-medium">{process.name}</p>
-                      <p className="text-xs text-gray-500">
+                    <div className="space-y-1.5 p-1">
+                      <p className="font-bold text-base">{process.name}</p>
+                      <p className="text-sm text-gray-400">
                         {process.scheduledStart} 〜 {process.scheduledEnd}
                       </p>
-                      <p className="text-xs">{process.description}</p>
+                      <p className="text-sm">{process.description}</p>
                       {process.aiModified && process.aiReason && (
-                        <p className="text-xs text-purple-600">
+                        <p className="text-sm text-purple-400 font-medium">
                           ✨ AI: {process.aiReason}
                         </p>
                       )}
