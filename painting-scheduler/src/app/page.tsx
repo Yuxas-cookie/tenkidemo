@@ -62,6 +62,16 @@ const riskMap = { low: { label: "低", cls: "bg-green-100 text-green-700" }, med
 
 const pageTransition = { initial: { opacity: 0, y: 24 }, animate: { opacity: 1, y: 0 }, exit: { opacity: 0, y: -24 }, transition: { duration: 0.35, ease: "easeInOut" as const } };
 
+// 工事タイプ → 自動選択される工程ID
+const WORK_TYPES = [
+  { id: "exterior", icon: "🏠", label: "外壁塗装", desc: "外壁の塗り替え工事（フルコース）", processIds: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] },
+  { id: "exterior-simple", icon: "🖌️", label: "外壁塗装（簡易）", desc: "下地処理済みの塗り替えのみ", processIds: [1, 2, 6, 7, 8, 9, 11, 12] },
+  { id: "roof", icon: "🏗️", label: "屋根リフォーム", desc: "屋根の補修・葺き替え工事", processIds: [1, 2, 3, 4, 7, 8, 9, 11, 12] },
+  { id: "waterproof", icon: "💧", label: "防水工事", desc: "ベランダ・屋上の防水工事", processIds: [1, 2, 3, 4, 5, 6, 11, 12] },
+  { id: "sealing", icon: "🔧", label: "シーリング工事", desc: "目地・サッシ周りのシーリング打替", processIds: [1, 2, 4, 5, 11, 12] },
+  { id: "interior", icon: "🎨", label: "内装塗装", desc: "室内の壁・天井の塗装", processIds: [1, 6, 7, 8, 9, 11] },
+] as const;
+
 function buildProcesses(startDate: string, selectedIds: number[]): SiteProcess[] {
   const selected = processMasters.filter((m) => selectedIds.includes(m.id));
   let cur = new Date(startDate);
@@ -93,7 +103,9 @@ export default function Dashboard() {
   const [startDate, setStartDate] = useState("2026-04-14");
   const [ownerName, setOwnerName] = useState("");
   const [useExisting, setUseExisting] = useState("");
+  const [workType, setWorkType] = useState<string>("exterior");
   const [selectedProcessIds, setSelectedProcessIds] = useState<number[]>(processMasters.map((m) => m.id));
+  const [showProcessDetail, setShowProcessDetail] = useState(false);
   const [showOptions, setShowOptions] = useState(false);
   const [priority, setPriority] = useState<"speed" | "cost" | "quality">("quality");
   const [avoidWeekends, setAvoidWeekends] = useState(false);
@@ -116,6 +128,12 @@ export default function Dashboard() {
     const site = sampleSites.find((s) => s.id === siteId);
     if (site) { setSiteName(site.name); setAddress(site.address); setBuildingType(site.buildingType); setPaintArea(String(site.paintArea)); setStartDate(site.startDate); setOwnerName(site.ownerName); }
     setUseExisting(siteId);
+  };
+
+  const handleWorkType = (id: string) => {
+    setWorkType(id);
+    const wt = WORK_TYPES.find((w) => w.id === id);
+    if (wt) setSelectedProcessIds([...wt.processIds]);
   };
 
   const toggleProcess = (id: number) => {
@@ -160,8 +178,10 @@ export default function Dashboard() {
               buildingType={buildingType} setBuildingType={setBuildingType}
               paintArea={paintArea} setPaintArea={setPaintArea}
               startDate={startDate} setStartDate={setStartDate}
+              workType={workType} handleWorkType={handleWorkType}
               selectedProcessIds={selectedProcessIds} toggleProcess={toggleProcess}
               setSelectedProcessIds={setSelectedProcessIds}
+              showProcessDetail={showProcessDetail} setShowProcessDetail={setShowProcessDetail}
               showOptions={showOptions} setShowOptions={setShowOptions}
               priority={priority} setPriority={setPriority}
               avoidWeekends={avoidWeekends} setAvoidWeekends={setAvoidWeekends}
@@ -246,8 +266,10 @@ function Step1Input(props: {
   buildingType: BuildingType; setBuildingType: (v: BuildingType) => void;
   paintArea: string; setPaintArea: (v: string) => void;
   startDate: string; setStartDate: (v: string) => void;
+  workType: string; handleWorkType: (id: string) => void;
   selectedProcessIds: number[]; toggleProcess: (id: number) => void;
   setSelectedProcessIds: (ids: number[]) => void;
+  showProcessDetail: boolean; setShowProcessDetail: (v: boolean) => void;
   showOptions: boolean; setShowOptions: (v: boolean) => void;
   priority: "speed" | "cost" | "quality"; setPriority: (v: "speed" | "cost" | "quality") => void;
   avoidWeekends: boolean; setAvoidWeekends: (v: boolean) => void;
@@ -344,47 +366,85 @@ function Step1Input(props: {
         </CardContent>
       </Card>
 
-      {/* ━━━ Section 2: 施工工程の選択 ━━━ */}
+      {/* ━━━ Section 2: 工事タイプ選択 ━━━ */}
       <Card className="mb-8 border-2 border-gray-200 shadow-sm overflow-hidden">
-        <div className="bg-gray-50 border-b border-gray-200 px-8 py-4 flex items-center justify-between">
+        <div className="bg-gray-50 border-b border-gray-200 px-8 py-4">
           <h2 className="text-lg font-bold text-gray-700 flex items-center gap-2">
-            <Layers size={20} className="text-purple-600" /> 施工する工程を選択
-            <Badge className="bg-purple-100 text-purple-700 ml-2">{props.selectedProcessIds.length}/{processMasters.length}</Badge>
+            <Layers size={20} className="text-purple-600" /> どの工事をしますか？
           </h2>
-          <button onClick={() => props.setSelectedProcessIds(allSelected ? [] : processMasters.map((m) => m.id))}
-            className="text-base font-semibold text-purple-600 hover:text-purple-700"
-          >
-            {allSelected ? "すべて解除" : "すべて選択"}
-          </button>
         </div>
         <CardContent className="p-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {processMasters.map((proc) => {
-              const isSelected = props.selectedProcessIds.includes(proc.id);
-              const rainIcon = proc.rainTolerance === "ok" ? "✅" : proc.rainTolerance === "partial" ? "⚠️" : "🚫";
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+            {WORK_TYPES.map((wt) => {
+              const isSelected = props.workType === wt.id;
               return (
-                <button key={proc.id} onClick={() => props.toggleProcess(proc.id)}
-                  className={`flex items-center gap-4 rounded-xl border-2 p-4 text-left transition-all duration-200 ${
-                    isSelected ? "border-purple-400 bg-purple-50/50 shadow-sm" : "border-gray-200 bg-white hover:border-gray-300 opacity-60"
+                <button key={wt.id} onClick={() => props.handleWorkType(wt.id)}
+                  className={`relative rounded-2xl border-2 p-5 text-left transition-all duration-200 ${
+                    isSelected ? "border-purple-500 bg-purple-50 shadow-lg shadow-purple-100/50" : "border-gray-200 bg-white hover:border-purple-300 hover:shadow-md"
                   }`}
                 >
-                  <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-base font-extrabold ${
-                    isSelected ? "bg-purple-600 text-white" : "bg-gray-200 text-gray-400"
-                  }`}>
-                    {isSelected ? <Check size={20} /> : proc.id}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-base font-bold text-gray-900">{proc.name}</p>
-                    <p className="text-sm text-gray-500 truncate">{proc.description}</p>
-                  </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    <span className="text-base">{rainIcon}</span>
-                    <span className="text-sm text-gray-400">{proc.durationDays}日{proc.dryingDays > 0 ? `+乾${proc.dryingDays}日` : ""}</span>
-                  </div>
+                  {isSelected && (
+                    <div className="absolute -top-2.5 -right-2.5 flex h-7 w-7 items-center justify-center rounded-full bg-purple-600 text-white shadow-md"><Check size={16} /></div>
+                  )}
+                  <span className="text-4xl block mb-3">{wt.icon}</span>
+                  <p className="text-lg font-bold text-gray-900">{wt.label}</p>
+                  <p className="text-sm text-gray-500 mt-1">{wt.desc}</p>
+                  <p className="text-sm text-purple-600 font-semibold mt-2">{wt.processIds.length}工程</p>
                 </button>
               );
             })}
           </div>
+
+          {/* Selected process summary */}
+          <div className="rounded-xl bg-purple-50/50 border border-purple-100 p-4 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Badge className="bg-purple-600 text-white text-base px-3 py-1">{props.selectedProcessIds.length}工程</Badge>
+              <span className="text-base text-gray-700 font-medium">
+                {props.selectedProcessIds.map((id) => processMasters.find((m) => m.id === id)?.name).filter(Boolean).join(" → ")}
+              </span>
+            </div>
+            <button onClick={() => props.setShowProcessDetail(!props.showProcessDetail)}
+              className="text-base font-semibold text-purple-600 hover:text-purple-700 flex items-center gap-1"
+            >
+              工程をカスタマイズ {props.showProcessDetail ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+            </button>
+          </div>
+
+          {/* Detailed process customization (optional) */}
+          {props.showProcessDetail && (
+            <div className="mt-4 space-y-2">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-base font-semibold text-gray-700">工程の追加・削除</p>
+                <button onClick={() => props.setSelectedProcessIds(allSelected ? [] : processMasters.map((m) => m.id))}
+                  className="text-sm font-semibold text-purple-600 hover:text-purple-700"
+                >
+                  {allSelected ? "すべて解除" : "すべて選択"}
+                </button>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {processMasters.map((proc) => {
+                  const isSelected = props.selectedProcessIds.includes(proc.id);
+                  const rainIcon = proc.rainTolerance === "ok" ? "✅" : proc.rainTolerance === "partial" ? "⚠️" : "🚫";
+                  return (
+                    <button key={proc.id} onClick={() => props.toggleProcess(proc.id)}
+                      className={`flex items-center gap-3 rounded-xl border-2 p-3 text-left transition-all duration-200 ${
+                        isSelected ? "border-purple-400 bg-purple-50/50" : "border-gray-200 bg-white opacity-50"
+                      }`}
+                    >
+                      <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-sm font-bold ${
+                        isSelected ? "bg-purple-600 text-white" : "bg-gray-200 text-gray-400"
+                      }`}>
+                        {isSelected ? <Check size={16} /> : proc.id}
+                      </div>
+                      <span className="text-base font-semibold text-gray-800 flex-1">{proc.name}</span>
+                      <span className="text-sm">{rainIcon}</span>
+                      <span className="text-sm text-gray-400">{proc.durationDays}日</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 
