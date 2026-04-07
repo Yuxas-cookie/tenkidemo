@@ -97,3 +97,31 @@ export interface AIStreamEvent {
 
 export type SimulationMode = "optimize" | "reschedule";
 export type SimulationState = "idle" | "thinking" | "streaming" | "complete" | "error";
+
+// ===== v3: 複数プラン提案 =====
+export type ProposalType = "fastest" | "balanced" | "safe";
+
+export interface ScheduleProposal {
+  id: string;
+  name: string;
+  type: ProposalType;
+  schedule: SiteProcess[];
+  totalDays: number;
+  impactDays: number;
+  impactCost: number;
+  riskLevel: "low" | "medium" | "high";
+  summary: string;
+  suggestions: AISuggestion[];
+}
+
+export interface SiteScheduleState {
+  siteId: string;
+  adoptedPlan: ScheduleProposal | null;
+  alternativePlans: ScheduleProposal[];
+}
+
+// ===== v3: 天気オーバーライド =====
+export interface WeatherOverride {
+  date: string;
+  weather: WeatherType;
+}

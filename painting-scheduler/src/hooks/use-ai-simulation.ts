@@ -1,23 +1,23 @@
 "use client";
 
 import { useState, useCallback, useRef } from "react";
-import { AIOptimizationResult, SimulationState, SimulationMode, Site, WeatherDay } from "@/lib/types";
+import { ScheduleProposal, SimulationState, SimulationMode, Site, WeatherDay } from "@/lib/types";
 
 export function useAISimulation() {
   const [state, setState] = useState<SimulationState>("idle");
   const [statusMessage, setStatusMessage] = useState("");
   const [reasoning, setReasoning] = useState("");
-  const [result, setResult] = useState<AIOptimizationResult | null>(null);
+  const [proposals, setProposals] = useState<ScheduleProposal[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
 
   const reset = useCallback(() => {
     abortRef.current?.abort();
-    setState("idle"); setStatusMessage(""); setReasoning(""); setResult(null); setError(null);
+    setState("idle"); setStatusMessage(""); setReasoning(""); setProposals(null); setError(null);
   }, []);
 
   const run = useCallback((site: Site, weather: WeatherDay[], mode: SimulationMode) => {
-    setState("thinking"); setStatusMessage("AIエンジンを起動中..."); setReasoning(""); setResult(null); setError(null);
+    setState("thinking"); setStatusMessage("AIエンジンを起動中..."); setReasoning(""); setProposals(null); setError(null);
     const controller = new AbortController(); abortRef.current = controller;
     const endpoint = mode === "optimize" ? "/api/ai/optimize" : "/api/ai/reschedule";
 
@@ -42,7 +42,12 @@ export function useAISimulation() {
             const ev = JSON.parse(line);
             if (ev.type === "status") setStatusMessage(ev.data);
             else if (ev.type === "reasoning_chunk") { setState("streaming"); setReasoning((p) => p + ev.data); }
-            else if (ev.type === "result") { setState("complete"); setResult(ev.data); }
+            else if (ev.type === "proposals") { setState("complete"); setProposals(ev.data); }
+            else if (ev.type === "result") {
+              // Backward compat: single result → wrap in proposals
+              setState("complete");
+              setProposals(ev.data.proposals || null);
+            }
             else if (ev.type === "error") { setState("error"); setError(ev.data.message); }
           } catch { /* skip */ }
         }
@@ -53,5 +58,5 @@ export function useAISimulation() {
     });
   }, []);
 
-  return { state, statusMessage, reasoning, result, error, run, reset };
+  return { state, statusMessage, reasoning, proposals, error, run, reset };
 }

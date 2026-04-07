@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { SiteProcess, WeatherDay, Site } from "@/lib/types";
 import { getSystemPrompt, getOptimizeUserPrompt } from "@/lib/ai/prompts";
-import { parseAIResponse, generateMockResult } from "@/lib/ai/parse-response";
+import { parseAIResponse, generateMockProposals } from "@/lib/ai/parse-response";
 
 export async function POST(request: NextRequest) {
   const { site, processes, weather }: { site: Site; processes: SiteProcess[]; weather: WeatherDay[] } = await request.json();
@@ -27,7 +27,13 @@ export async function POST(request: NextRequest) {
               ctrl.enqueue(enc.encode(JSON.stringify({ type: "reasoning_chunk", data: ev.delta.text }) + "\n"));
             }
           }
-          ctrl.enqueue(enc.encode(JSON.stringify({ type: "result", data: parseAIResponse(full, processes) }) + "\n"));
+          const result = parseAIResponse(full, processes);
+          // Convert single result to 3 proposals for v3
+          const proposals = generateMockProposals(processes);
+          proposals[1].schedule = result.optimizedSchedule;
+          proposals[1].summary = result.summary;
+          proposals[1].suggestions = result.suggestions;
+          ctrl.enqueue(enc.encode(JSON.stringify({ type: "proposals", data: proposals }) + "\n"));
         } catch (e) {
           ctrl.enqueue(enc.encode(JSON.stringify({ type: "error", data: { message: e instanceof Error ? e.message : "エラー" } }) + "\n"));
         } finally { ctrl.close(); }
@@ -40,17 +46,22 @@ export async function POST(request: NextRequest) {
 }
 
 function streamMock(processes: SiteProcess[]) {
-  const enc = new TextEncoder(); const mock = generateMockResult(processes, "optimize");
+  const enc = new TextEncoder();
+  const proposals = generateMockProposals(processes);
+  const reasoning = "天気予報を分析した結果、工事開始5日目から3日間の降雨が予想されます。下塗り以降の工程を雨天明けに移動することで、塗膜品質を確保しつつ工期延長を最小限に抑えます。\n\n3つのプランをご提案します。最速プランはリスクを許容して+1日、バランスプランは雨天を完全回避して+3日、安全プランはバッファを含めて+5日の工期延長となります。";
+
   const stream = new ReadableStream({
     async start(ctrl) {
-      for (const msg of ["天気データを分析中...", "工程の依存関係を確認中...", "最適スケジュールを計算中...", "提案を生成中..."]) {
-        ctrl.enqueue(enc.encode(JSON.stringify({ type: "status", data: msg }) + "\n")); await new Promise((r) => setTimeout(r, 800));
+      for (const msg of ["天気データを分析中...", "工程の依存関係を確認中...", "3つのプランを生成中...", "提案を最終調整中..."]) {
+        ctrl.enqueue(enc.encode(JSON.stringify({ type: "status", data: msg }) + "\n"));
+        await new Promise((r) => setTimeout(r, 800));
       }
-      for (const chunk of (mock.reasoning.match(/.{1,20}/g) || [])) {
-        ctrl.enqueue(enc.encode(JSON.stringify({ type: "reasoning_chunk", data: chunk }) + "\n")); await new Promise((r) => setTimeout(r, 50));
+      for (const chunk of (reasoning.match(/.{1,20}/g) || [])) {
+        ctrl.enqueue(enc.encode(JSON.stringify({ type: "reasoning_chunk", data: chunk }) + "\n"));
+        await new Promise((r) => setTimeout(r, 50));
       }
       await new Promise((r) => setTimeout(r, 300));
-      ctrl.enqueue(enc.encode(JSON.stringify({ type: "result", data: mock }) + "\n"));
+      ctrl.enqueue(enc.encode(JSON.stringify({ type: "proposals", data: proposals }) + "\n"));
       ctrl.close();
     },
   });
