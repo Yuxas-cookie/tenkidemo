@@ -1,6 +1,23 @@
 import { NextRequest } from "next/server";
 import { weatherScenarios } from "@/lib/data/weather-scenarios";
-import { WeatherScenario } from "@/lib/types";
+import { WeatherScenario, WeatherType } from "@/lib/types";
+
+// WMO Weather Code → アプリ内天気タイプ変換
+function wmoCodeToWeatherType(code: number): WeatherType {
+  if (code <= 1) return "sunny"; // Clear sky, Mainly clear
+  if (code <= 3) return "cloudy"; // Partly cloudy, Overcast
+  if (code <= 48) return "cloudy"; // Fog variants
+  if (code <= 55) return "rainy"; // Drizzle
+  if (code <= 57) return "rainy"; // Freezing drizzle
+  if (code <= 61) return "rainy"; // Slight rain
+  if (code <= 65) return "heavy_rain"; // Moderate/heavy rain
+  if (code <= 67) return "heavy_rain"; // Freezing rain
+  if (code <= 77) return "cloudy"; // Snow (treat as cloudy for painting)
+  if (code <= 82) return "heavy_rain"; // Rain showers
+  if (code <= 86) return "cloudy"; // Snow showers
+  if (code >= 95) return "storm"; // Thunderstorm
+  return "cloudy";
+}
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
@@ -15,62 +32,43 @@ export async function GET(request: NextRequest) {
     return Response.json(forecast);
   }
 
-  // Real mode: use OpenWeatherMap
-  const apiKey = process.env.OPENWEATHER_API_KEY;
-  if (!apiKey) {
-    // Fallback to demo data
-    return Response.json({
-      ...weatherScenarios[scenario],
-      _warning: "OpenWeatherMap API key not configured. Using demo data.",
-    });
-  }
-
+  // Real mode: Open-Meteo API（APIキー不要・無料）
   try {
-    const lat = 34.5198; // Takaishi, Osaka
+    const lat = 34.5198; // 高石市, 大阪
     const lon = 135.4405;
     const res = await fetch(
-      `https://api.openweathermap.org/data/2.5/forecast/daily?lat=${lat}&lon=${lon}&cnt=16&appid=${apiKey}&units=metric&lang=ja`
+      `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,wind_speed_10m_max,relative_humidity_2m_max&timezone=Asia%2FTokyo&forecast_days=16`,
+      { next: { revalidate: 3600 } } // 1時間キャッシュ
     );
 
     if (!res.ok) {
-      throw new Error(`OpenWeatherMap API error: ${res.status}`);
+      throw new Error(`Open-Meteo API error: ${res.status}`);
     }
 
     const data = await res.json();
-    const days = data.list.map(
-      (day: {
-        dt: number;
-        weather: { main: string }[];
-        temp: { max: number; min: number };
-        humidity: number;
-        speed: number;
-        rain?: number;
-      }) => {
-        const date = new Date(day.dt * 1000).toISOString().split("T")[0];
-        const mainWeather = day.weather[0].main.toLowerCase();
-        const weather = mainWeather.includes("rain")
-          ? day.rain && day.rain > 10
-            ? "heavy_rain"
-            : "rainy"
-          : mainWeather.includes("cloud")
-            ? "cloudy"
-            : "sunny";
+    const daily = data.daily;
 
-        return {
-          date,
-          weather,
-          tempMax: Math.round(day.temp.max),
-          tempMin: Math.round(day.temp.min),
-          humidity: day.humidity,
-          windSpeed: day.speed,
-          precipitation: day.rain || 0,
-          canWork:
-            day.temp.max >= 5 &&
-            day.humidity < 85 &&
-            !["rainy", "heavy_rain", "storm"].includes(weather),
-        };
-      }
-    );
+    const days = daily.time.map((date: string, i: number) => {
+      const weatherCode = daily.weather_code[i];
+      const weather = wmoCodeToWeatherType(weatherCode);
+      const tempMax = Math.round(daily.temperature_2m_max[i]);
+      const humidity = Math.round(daily.relative_humidity_2m_max[i]);
+      const precipitation = daily.precipitation_sum[i];
+
+      return {
+        date,
+        weather,
+        tempMax,
+        tempMin: Math.round(daily.temperature_2m_min[i]),
+        humidity,
+        windSpeed: Math.round(daily.wind_speed_10m_max[i] / 3.6 * 10) / 10, // km/h → m/s
+        precipitation: Math.round(precipitation * 10) / 10,
+        canWork:
+          tempMax >= 5 &&
+          humidity < 85 &&
+          !["rainy", "heavy_rain", "storm"].includes(weather),
+      };
+    });
 
     return Response.json({
       location: "大阪府高石市",
