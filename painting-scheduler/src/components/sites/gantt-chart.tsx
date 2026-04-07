@@ -56,10 +56,10 @@ export function GanttChart({ processes, weatherDays, compact = false }: GanttCha
     return map;
   }, [weatherDays]);
 
-  const labelW = compact ? 160 : 280;
-  const colW = compact ? 44 : 68;
-  const rowH = compact ? 44 : 56;
-  const barH = compact ? 28 : 40;
+  const labelW = compact ? 120 : 200;
+  const colW = compact ? 36 : 52;
+  const rowH = compact ? 40 : 48;
+  const barH = compact ? 24 : 36;
   const barTop = compact ? 8 : 8;
 
   return (
@@ -74,7 +74,7 @@ export function GanttChart({ processes, weatherDays, compact = false }: GanttCha
         {processes.map((proc) => (
           <div key={proc.id} className="border-b border-gray-100 px-4 flex items-center gap-2.5 hover:bg-blue-50/30 transition-colors" style={{ height: rowH }}>
             <span className={compact ? "text-base" : "text-lg"}>{getRainIcon(proc.rainTolerance)}</span>
-            <span className={`${compact ? "text-sm" : "text-base"} font-bold text-gray-800 truncate`}>
+            <span className={`${compact ? "text-sm" : "text-sm sm:text-base"} font-bold text-gray-800 truncate`}>
               {proc.name}
             </span>
             {!compact && (

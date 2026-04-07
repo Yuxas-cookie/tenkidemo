@@ -105,7 +105,7 @@ export default function ExpensesPage() {
           <h2 className="text-xl font-bold text-gray-900">{now.getMonth() + 1}月の経費</h2>
           <span className="text-3xl font-extrabold text-gray-900">¥{monthTotal.toLocaleString()}</span>
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
           {(Object.entries(CAT_META) as [ExpenseCategory, typeof CAT_META.material][]).map(([cat, meta]) => {
             const Icon = meta.icon;
             const total = catTotals[cat];
@@ -239,10 +239,10 @@ export default function ExpensesPage() {
       </AnimatePresence>
 
       {/* Filters */}
-      <div className="flex items-center gap-4 mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 mb-6">
         <Filter size={20} className="text-gray-400" />
         <Select value={filterCat} onValueChange={(v) => setFilterCat(v || "all")}>
-          <SelectTrigger className="w-[180px] text-base rounded-xl"><SelectValue placeholder="カテゴリ" /></SelectTrigger>
+          <SelectTrigger className="w-full sm:w-[180px] text-base rounded-xl"><SelectValue placeholder="カテゴリ" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">全カテゴリ</SelectItem>
             {(Object.entries(CAT_META) as [ExpenseCategory, typeof CAT_META.material][]).map(([cat, meta]) => (
@@ -251,7 +251,7 @@ export default function ExpensesPage() {
           </SelectContent>
         </Select>
         <Select value={filterSite} onValueChange={(v) => setFilterSite(v || "all")}>
-          <SelectTrigger className="w-[180px] text-base rounded-xl"><SelectValue placeholder="現場" /></SelectTrigger>
+          <SelectTrigger className="w-full sm:w-[180px] text-base rounded-xl"><SelectValue placeholder="現場" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">全現場</SelectItem>
             <SelectItem value="none">紐付けなし</SelectItem>
@@ -274,8 +274,8 @@ export default function ExpensesPage() {
           const site = exp.siteId ? sampleSites.find((s) => s.id === exp.siteId) : null;
           return (
             <Card key={exp.id} className="hover:shadow-md transition-all">
-              <CardContent className="p-5 flex items-center gap-5">
-                <div className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-xl ${meta.bg} border`}>
+              <CardContent className="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-5">
+                <div className={`flex h-12 w-12 sm:h-14 sm:w-14 shrink-0 items-center justify-center rounded-xl ${meta.bg} border`}>
                   <Icon size={26} className={meta.color} />
                 </div>
                 <div className="flex-1 min-w-0">
@@ -292,7 +292,7 @@ export default function ExpensesPage() {
                     {!site && exp.siteId === null && <span>📎 紐付けなし</span>}
                   </div>
                 </div>
-                <p className="text-2xl font-extrabold text-gray-900 shrink-0">¥{exp.amount.toLocaleString()}</p>
+                <p className="text-xl sm:text-2xl font-extrabold text-gray-900 shrink-0">¥{exp.amount.toLocaleString()}</p>
               </CardContent>
             </Card>
           );

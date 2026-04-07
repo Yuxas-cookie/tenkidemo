@@ -48,12 +48,12 @@ export function SiteDetailView({ site }: SiteDetailViewProps) {
 
       {/* Property header */}
       <Card className="mb-8 overflow-hidden">
-        <div className="bg-gradient-to-r from-blue-600 to-indigo-700 px-8 py-8">
-          <div className="flex items-center justify-between">
+        <div className="bg-gradient-to-r from-blue-600 to-indigo-700 px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-5">
-              <span className="text-6xl">{getBuildingTypeIcon(site.buildingType)}</span>
+              <span className="text-4xl sm:text-6xl">{getBuildingTypeIcon(site.buildingType)}</span>
               <div>
-                <h1 className="text-3xl font-bold text-white">{site.name}</h1>
+                <h1 className="text-xl sm:text-3xl font-bold text-white">{site.name}</h1>
                 <p className="text-lg text-blue-100 mt-1">{site.address}</p>
               </div>
             </div>
@@ -69,8 +69,8 @@ export function SiteDetailView({ site }: SiteDetailViewProps) {
             </div>
           </div>
         </div>
-        <CardContent className="px-8 py-6">
-          <div className="grid grid-cols-2 sm:grid-cols-5 gap-6">
+        <CardContent className="px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4 lg:gap-6">
             <InfoItem label="施主" value={site.ownerName} />
             <InfoItem label="建物種別" value={getBuildingTypeLabel(site.buildingType)} />
             <InfoItem label="塗装面積" value={`${site.paintArea}m²`} />
@@ -87,10 +87,10 @@ export function SiteDetailView({ site }: SiteDetailViewProps) {
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-bold text-gray-900">工程スケジュール</h2>
               <TabsList>
-                <TabsTrigger value="gantt" className="text-base px-6 py-2.5">ガントチャート</TabsTrigger>
-                <TabsTrigger value="list" className="text-base px-6 py-2.5">工程リスト</TabsTrigger>
+                <TabsTrigger value="gantt" className="text-sm sm:text-base px-3 sm:px-6 py-2">ガントチャート</TabsTrigger>
+                <TabsTrigger value="list" className="text-sm sm:text-base px-3 sm:px-6 py-2">工程リスト</TabsTrigger>
                 {alternatives.length > 0 && (
-                  <TabsTrigger value="alternatives" className="text-base px-6 py-2.5">
+                  <TabsTrigger value="alternatives" className="text-sm sm:text-base px-3 sm:px-6 py-2">
                     代替プラン ({alternatives.length})
                   </TabsTrigger>
                 )}
@@ -109,7 +109,7 @@ export function SiteDetailView({ site }: SiteDetailViewProps) {
                   {alternatives.map((alt) => (
                     <Card key={alt.id} className="border-2 hover:border-purple-200 transition-all">
                       <CardContent className="p-6">
-                        <div className="flex items-center justify-between">
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
                           <div className="flex-1">
                             <div className="flex items-center gap-3 mb-2">
                               <h4 className="text-lg font-bold text-gray-900">{alt.name}</h4>
@@ -126,7 +126,7 @@ export function SiteDetailView({ site }: SiteDetailViewProps) {
                               <span className="text-gray-500">コスト: <strong className="text-gray-900">{alt.impactCost}万円</strong></span>
                             </div>
                           </div>
-                          <Button onClick={() => switchPlan(site.id, alt.id)} className="bg-gradient-to-r from-purple-600 to-blue-600 text-white gap-2 shrink-0 ml-6">
+                          <Button onClick={() => switchPlan(site.id, alt.id)} className="bg-gradient-to-r from-purple-600 to-blue-600 text-white gap-2 shrink-0 mt-4 sm:mt-0 sm:ml-6">
                             <ArrowRightLeft size={18} /> このプランに切替
                           </Button>
                         </div>
@@ -142,7 +142,7 @@ export function SiteDetailView({ site }: SiteDetailViewProps) {
 
       <div className="flex justify-center py-4">
         <Link href="/simulation">
-          <Button size="lg" className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white shadow-xl gap-3 text-lg px-10 py-7 rounded-xl">
+          <Button size="lg" className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white shadow-xl gap-3 text-base sm:text-lg px-6 sm:px-10 py-5 sm:py-7 rounded-xl">
             <Sparkles size={24} /> AIスケジュール最適化を実行
           </Button>
         </Link>

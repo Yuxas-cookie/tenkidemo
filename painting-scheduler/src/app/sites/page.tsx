@@ -23,17 +23,17 @@ export default function SitesPage() {
         description="管理中のすべての塗装工事現場"
       />
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
         {sampleSites.map((site) => {
           const progress = getProgressPercentage(site.processes);
           return (
             <Link href={`/sites/${site.id}`} key={site.id}>
               <Card className="group hover:shadow-xl hover:border-blue-200 hover:-translate-y-1 transition-all duration-300 cursor-pointer h-full">
-                <CardContent className="p-7">
+                <CardContent className="p-5 sm:p-7">
                   {/* Header */}
                   <div className="flex items-start justify-between mb-6">
                     <div className="flex items-center gap-4">
-                      <span className="text-5xl">
+                      <span className="text-3xl sm:text-5xl">
                         {getBuildingTypeIcon(site.buildingType)}
                       </span>
                       <div>
@@ -54,7 +54,7 @@ export default function SitesPage() {
                   </div>
 
                   {/* Details */}
-                  <div className="grid grid-cols-2 gap-4 mb-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-6">
                     <div>
                       <p className="text-sm text-gray-400">施主</p>
                       <p className="text-base font-semibold text-gray-900">

@@ -79,7 +79,7 @@ export default function CalendarPage() {
 
       {/* Legend */}
       {adopted.length > 0 && (
-        <div className="flex items-center gap-6 mb-6">
+        <div className="flex items-center flex-wrap gap-3 sm:gap-6 mb-6">
           {adopted.map(({ siteId }) => {
             const siteIdx = sampleSites.findIndex((s) => s.id === siteId);
             const site = sampleSites[siteIdx];
@@ -96,13 +96,13 @@ export default function CalendarPage() {
 
       {/* Calendar */}
       <Card>
-        <CardContent className="p-6">
+        <CardContent className="p-3 sm:p-4 lg:p-6">
           {/* Month nav */}
           <div className="flex items-center justify-between mb-6">
             <Button variant="outline" size="lg" onClick={() => setCurrentMonth(new Date(year, month - 1, 1))}>
               <ChevronLeft size={20} />
             </Button>
-            <h2 className="text-2xl font-bold text-gray-900">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900">
               {year}年 {month + 1}月
             </h2>
             <Button variant="outline" size="lg" onClick={() => setCurrentMonth(new Date(year, month + 1, 1))}>
@@ -111,7 +111,7 @@ export default function CalendarPage() {
           </div>
 
           {/* Weekday headers */}
-          <div className="grid grid-cols-7 gap-1 mb-2">
+          <div className="grid grid-cols-7 gap-0.5 sm:gap-1 mb-2">
             {WEEKDAYS.map((wd, i) => (
               <div key={wd} className={`text-center text-base font-bold py-2 ${i === 0 ? "text-red-500" : i === 6 ? "text-blue-500" : "text-gray-500"}`}>
                 {wd}
@@ -120,9 +120,9 @@ export default function CalendarPage() {
           </div>
 
           {/* Day grid */}
-          <div className="grid grid-cols-7 gap-1">
+          <div className="grid grid-cols-7 gap-0.5 sm:gap-1">
             {calendarDays.map((day, idx) => {
-              if (day === null) return <div key={idx} className="min-h-[100px]" />;
+              if (day === null) return <div key={idx} className="min-h-[70px] sm:min-h-[90px] lg:min-h-[100px]" />;
 
               const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
               const weather = weatherMap.get(dateStr);
@@ -132,12 +132,12 @@ export default function CalendarPage() {
               return (
                 <div
                   key={idx}
-                  className={`min-h-[100px] rounded-lg border p-2 transition-colors ${
+                  className={`min-h-[70px] sm:min-h-[90px] lg:min-h-[100px] rounded-lg border p-2 transition-colors ${
                     weather && !weather.canWork ? "bg-red-50 border-red-200" : "bg-white border-gray-100 hover:border-blue-200"
                   }`}
                 >
                   <div className="flex items-center justify-between mb-1">
-                    <span className={`text-base font-bold ${dow === 0 ? "text-red-500" : dow === 6 ? "text-blue-500" : "text-gray-700"}`}>
+                    <span className={`text-sm sm:text-base font-bold ${dow === 0 ? "text-red-500" : dow === 6 ? "text-blue-500" : "text-gray-700"}`}>
                       {day}
                     </span>
                     {weather && (

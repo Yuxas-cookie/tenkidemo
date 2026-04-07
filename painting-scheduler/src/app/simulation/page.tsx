@@ -52,7 +52,7 @@ export default function SimulationPage() {
       {!selectedSite && (
         <div>
           <h2 className="text-xl font-bold text-gray-900 mb-4">現場を選択してください</h2>
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {sampleSites.map((site) => (
               <Card key={site.id} className="cursor-pointer hover:shadow-lg hover:border-purple-300 transition-all" onClick={() => setSelectedSite(site)}>
                 <CardContent className="p-6">
@@ -75,7 +75,7 @@ export default function SimulationPage() {
       {selectedSite && (
         <div>
           <Card className="mb-8 bg-gradient-to-r from-purple-600 to-blue-600 text-white">
-            <CardContent className="p-6 flex items-center justify-between">
+            <CardContent className="p-4 sm:p-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex items-center gap-4">
                 <span className="text-4xl">{getBuildingTypeIcon(selectedSite.buildingType)}</span>
                 <div>
@@ -83,7 +83,7 @@ export default function SimulationPage() {
                   <p className="text-purple-100">{selectedSite.address} | {selectedSite.paintArea}m²</p>
                 </div>
               </div>
-              <Button variant="outline" className="text-white border-white/40 hover:bg-white/20" onClick={() => { setSelectedSite(null); sim.reset(); setAdoptedId(null); }}>
+              <Button variant="outline" className="w-full sm:w-auto text-white border-white/40 hover:bg-white/20" onClick={() => { setSelectedSite(null); sim.reset(); setAdoptedId(null); }}>
                 別の現場を選ぶ
               </Button>
             </CardContent>

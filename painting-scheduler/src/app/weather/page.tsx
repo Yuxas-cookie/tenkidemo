@@ -95,7 +95,7 @@ export default function WeatherPage() {
       )}
 
       {/* Day grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
         {days.map((day) => {
           const isOverridden = overrides.some((o) => o.date === day.date);
           const affected = !day.canWork ? getAffectedProcesses(day.date) : [];
@@ -112,12 +112,12 @@ export default function WeatherPage() {
               }`}
               onClick={() => toggleRainOverride(day.date)}
             >
-              <CardContent className="p-6 text-center">
+              <CardContent className="p-4 sm:p-6 text-center">
                 {isOverridden && (
                   <Badge className="bg-purple-100 text-purple-700 text-sm mb-2">✨ 雨に変更中</Badge>
                 )}
                 <p className="text-base font-bold text-gray-700 mb-3">{formatDateFull(day.date)}</p>
-                <div className="text-6xl mb-3">{getWeatherEmoji(day.weather)}</div>
+                <div className="text-4xl sm:text-6xl mb-3">{getWeatherEmoji(day.weather)}</div>
                 <p className="text-lg font-semibold text-gray-900 mb-3">{getWeatherLabel(day.weather)}</p>
 
                 <div className="space-y-2 text-base">

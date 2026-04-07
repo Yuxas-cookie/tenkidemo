@@ -245,7 +245,7 @@ function StepIndicator({ current }: { current: 1 | 2 | 3 }) {
               }`}>{s.label}</p>
             </div>
             {i < steps.length - 1 && (
-              <div className={`w-24 sm:w-36 h-1 rounded-full mx-3 mb-6 transition-all duration-500 ${
+              <div className={`w-8 sm:w-20 lg:w-36 h-1 rounded-full mx-3 mb-6 transition-all duration-500 ${
                 current > s.num ? "bg-green-400" : current === s.num ? "bg-blue-200" : "bg-gray-200"
               }`} />
             )}
@@ -286,7 +286,7 @@ function Step1Input(props: {
         <div className="inline-flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-to-br from-purple-500 to-blue-600 shadow-xl shadow-purple-200/50 mb-6">
           <Sparkles size={40} className="text-white" />
         </div>
-        <h1 className="text-4xl sm:text-5xl font-extrabold text-gray-900 tracking-tight mb-3">
+        <h1 className="text-2xl sm:text-3xl lg:text-5xl font-extrabold text-gray-900 tracking-tight mb-3">
           スケジュールシミュレーター
         </h1>
         <p className="text-xl text-gray-500 max-w-2xl mx-auto">
@@ -331,7 +331,7 @@ function Step1Input(props: {
           {/* Building type */}
           <div className="mb-8">
             <label className="flex items-center gap-2 text-base font-semibold text-gray-700 mb-3">建物種別</label>
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               {([
                 { value: "house" as const, icon: "🏠", label: "戸建て住宅", desc: "一般住宅の外壁塗装" },
                 { value: "apartment" as const, icon: "🏢", label: "マンション", desc: "集合住宅の大規模修繕" },
@@ -463,7 +463,7 @@ function Step1Input(props: {
           <CardContent className="p-8 space-y-6">
             <div>
               <label className="text-base font-semibold text-gray-700 mb-3 block">優先事項</label>
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 {([["speed", "🚀 スピード重視", "工期を最短に"], ["cost", "💰 コスト重視", "追加費用を最小に"], ["quality", "✨ 品質重視", "天候リスクを最小に"]] as const).map(
                   ([val, label, desc]) => (
                     <button key={val} onClick={() => props.setPriority(val)}

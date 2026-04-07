@@ -113,7 +113,7 @@ export default function EstimatePage() {
             <Card className="mb-8 border-2 border-dashed border-gray-300 hover:border-emerald-400 transition-colors">
               <CardContent className="p-0">
                 <div
-                  className="flex flex-col items-center justify-center py-20 px-8 cursor-pointer"
+                  className="flex flex-col items-center justify-center py-10 sm:py-20 px-8 cursor-pointer"
                   onDrop={handleDrop}
                   onDragOver={(e) => e.preventDefault()}
                   onClick={() => fileRef.current?.click()}
@@ -282,6 +282,7 @@ export default function EstimatePage() {
             {/* Breakdown table */}
             <Card className="mb-8 border-2">
               <CardContent className="p-0">
+                <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
                     <tr className="bg-gray-50 border-b-2 border-gray-200">
@@ -316,6 +317,7 @@ export default function EstimatePage() {
                     </tr>
                   </tfoot>
                 </table>
+                </div>
               </CardContent>
             </Card>
 
@@ -361,12 +363,12 @@ function StepBar({ current }: { current: 1 | 2 | 3 | 4 }) {
               }`}>
                 {isDone ? <Check size={22} /> : isActive && s.num === 2 ? <Loader2 size={22} className="animate-spin" /> : <Icon size={22} />}
               </div>
-              <p className={`mt-2 text-sm font-semibold whitespace-nowrap ${
+              <p className={`mt-2 text-xs sm:text-sm font-semibold whitespace-nowrap ${
                 isDone ? "text-green-600" : isActive ? "text-emerald-600" : "text-gray-400"
               }`}>{s.label}</p>
             </div>
             {i < steps.length - 1 && (
-              <div className={`w-16 sm:w-24 h-1 rounded-full mx-2 mb-6 transition-all duration-500 ${
+              <div className={`w-8 sm:w-16 lg:w-24 h-1 rounded-full mx-2 mb-6 transition-all duration-500 ${
                 current > s.num ? "bg-green-400" : current === s.num ? "bg-emerald-200" : "bg-gray-200"
               }`} />
             )}
