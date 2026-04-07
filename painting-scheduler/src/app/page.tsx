@@ -179,20 +179,36 @@ export default function Dashboard() {
               onChange={(v) => { setAddress(v); setUseExisting(""); }} placeholder="例: 大阪府高石市取石3丁目" />
             <InputField icon={<Building2 size={18} />} label="施主名" value={ownerName}
               onChange={(v) => setOwnerName(v)} placeholder="例: 田中 太郎" />
-            <div>
+            <div className="sm:col-span-2 lg:col-span-3">
               <label className="flex items-center gap-2 text-base font-semibold text-gray-700 mb-2">
                 <Building2 size={18} className="text-gray-400" /> 建物種別
               </label>
-              <Select value={buildingType} onValueChange={(v) => setBuildingType(v as BuildingType)}>
-                <SelectTrigger className="h-14 text-base rounded-xl border-2">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="house" className="text-base py-3">🏠 戸建て住宅</SelectItem>
-                  <SelectItem value="apartment" className="text-base py-3">🏢 マンション</SelectItem>
-                  <SelectItem value="public" className="text-base py-3">🏛️ 公共施設</SelectItem>
-                </SelectContent>
-              </Select>
+              <div className="grid grid-cols-3 gap-3">
+                {([
+                  { value: "house" as const, icon: "🏠", label: "戸建て住宅", desc: "一般住宅の外壁塗装" },
+                  { value: "apartment" as const, icon: "🏢", label: "マンション", desc: "集合住宅の大規模修繕" },
+                  { value: "public" as const, icon: "🏛️", label: "公共施設", desc: "公共建築物の塗装工事" },
+                ]).map((item) => (
+                  <button key={item.value} onClick={() => setBuildingType(item.value)}
+                    className={`relative rounded-2xl border-2 p-5 text-left transition-all duration-200 ${
+                      buildingType === item.value
+                        ? "border-blue-500 bg-blue-50 shadow-md shadow-blue-100"
+                        : "border-gray-200 bg-white hover:border-blue-300 hover:shadow-sm"
+                    }`}
+                  >
+                    {buildingType === item.value && (
+                      <div className="absolute -top-2 -right-2 flex h-6 w-6 items-center justify-center rounded-full bg-blue-600 text-white"><Check size={14} /></div>
+                    )}
+                    <div className="flex items-center gap-4">
+                      <span className="text-4xl">{item.icon}</span>
+                      <div>
+                        <p className="text-lg font-bold text-gray-900">{item.label}</p>
+                        <p className="text-sm text-gray-500">{item.desc}</p>
+                      </div>
+                    </div>
+                  </button>
+                ))}
+              </div>
             </div>
             <InputField icon={<Ruler size={18} />} label="塗装面積（m²）" value={paintArea}
               onChange={(v) => setPaintArea(v)} placeholder="150" type="number" />
