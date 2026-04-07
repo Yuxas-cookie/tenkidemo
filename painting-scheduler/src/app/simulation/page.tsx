@@ -139,19 +139,7 @@ function SimContent({ sim, days, onRun, expandedPlan, setExpandedPlan, adoptedId
         </Card>
       )}
 
-      {(sim.state === "streaming" || sim.state === "complete") && sim.reasoning && (
-        <Card><CardContent className="p-6">
-          <div className="flex gap-4">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-purple-500 to-blue-500 text-white text-xl shadow-md">✨</div>
-            <div className="flex-1">
-              <p className="text-base font-bold text-gray-700 mb-2">AI工程アドバイザー</p>
-              <div className="rounded-xl bg-gray-50 border border-gray-200 p-5 max-h-48 overflow-y-auto">
-                <p className="text-base text-gray-700 whitespace-pre-wrap leading-relaxed">{sim.reasoning}</p>
-              </div>
-            </div>
-          </div>
-        </CardContent></Card>
-      )}
+      {/* reasoning removed in v4 - progress bar in hook instead */}
 
       {/* 3 Proposals */}
       {sim.state === "complete" && sim.proposals && (

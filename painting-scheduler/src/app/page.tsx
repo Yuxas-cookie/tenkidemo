@@ -97,7 +97,9 @@ export default function Dashboard() {
   const [includeBuffer, setIncludeBuffer] = useState(true);
 
   // Result
-  const [expandedPlan, setExpandedPlan] = useState<string | null>(null);
+  const [selectedPlanId, setSelectedPlanId] = useState<string | null>(null);
+  const [compareMode, setCompareMode] = useState(false);
+  const [comparePlanIds, setComparePlanIds] = useState<[string, string] | null>(null);
   const [adoptedId, setAdoptedId] = useState<string | null>(null);
 
   // Auto-transition
@@ -119,7 +121,7 @@ export default function Dashboard() {
       buildingType, paintArea: Number(paintArea) || 150, startDate, status: "scheduled",
       processes: useExisting ? sampleSites.find((s) => s.id === useExisting)?.processes || buildProcesses(startDate) : buildProcesses(startDate),
     };
-    sim.reset(); setAdoptedId(null); setExpandedPlan(null);
+    sim.reset(); setAdoptedId(null); setSelectedPlanId(null); setCompareMode(false); setComparePlanIds(null);
     sim.run(site, days, "optimize");
   };
 
@@ -130,7 +132,7 @@ export default function Dashboard() {
   };
 
   const handleRestart = () => {
-    sim.reset(); setAdoptedId(null); setExpandedPlan(null); setStep(1);
+    sim.reset(); setAdoptedId(null); setSelectedPlanId(null); setCompareMode(false); setComparePlanIds(null); setStep(1);
   };
 
   const alertDays = days.filter((d) => !d.canWork);
@@ -163,14 +165,17 @@ export default function Dashboard() {
         )}
         {step === 2 && (
           <motion.div key="step2" {...pageTransition}>
-            <Step2Loading statusMessage={sim.statusMessage} reasoning={sim.reasoning} isStreaming={sim.state === "streaming"} />
+            <Step2Loading statusMessage={sim.statusMessage} progress={sim.progress} />
           </motion.div>
         )}
         {step === 3 && (
           <motion.div key="step3" {...pageTransition}>
             <Step3Result
               proposals={sim.proposals} error={sim.error} simState={sim.state}
-              days={days} expandedPlan={expandedPlan} setExpandedPlan={setExpandedPlan}
+              days={days}
+              selectedPlanId={selectedPlanId} setSelectedPlanId={setSelectedPlanId}
+              compareMode={compareMode} setCompareMode={setCompareMode}
+              comparePlanIds={comparePlanIds} setComparePlanIds={setComparePlanIds}
               adoptedId={adoptedId} onAdopt={handleAdopt} onRestart={handleRestart}
             />
           </motion.div>
@@ -405,91 +410,72 @@ function Step1Input(props: {
 }
 
 // ━━━━━━━━━━━━━━━━━━━━
-// Step 2: Loading
+// Step 2: Loading (progress %)
 // ━━━━━━━━━━━━━━━━━━━━
-function Step2Loading({ statusMessage, reasoning, isStreaming }: {
-  statusMessage: string; reasoning: string; isStreaming: boolean;
+function Step2Loading({ statusMessage, progress }: {
+  statusMessage: string; progress: number;
 }) {
   return (
     <div className="flex flex-col items-center justify-center min-h-[60vh]">
       {/* Pulsing icon */}
-      <motion.div
-        className="relative mb-10"
+      <motion.div className="relative mb-10"
         animate={{ scale: [1, 1.05, 1] }}
-        transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+        transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" as const }}
       >
         <div className="flex h-32 w-32 items-center justify-center rounded-full bg-gradient-to-br from-purple-500 to-blue-600 text-6xl text-white shadow-2xl shadow-purple-300/50">
           ✨
         </div>
         {[0, 1, 2].map((i) => (
-          <motion.div key={i}
-            className="absolute top-1/2 left-1/2 h-4 w-4 rounded-full bg-purple-400/80"
+          <motion.div key={i} className="absolute top-1/2 left-1/2 h-4 w-4 rounded-full bg-purple-400/80"
             animate={{
               x: [Math.cos((i * 2 * Math.PI) / 3) * 70, Math.cos((i * 2 * Math.PI) / 3 + Math.PI) * 70, Math.cos((i * 2 * Math.PI) / 3 + 2 * Math.PI) * 70],
               y: [Math.sin((i * 2 * Math.PI) / 3) * 70, Math.sin((i * 2 * Math.PI) / 3 + Math.PI) * 70, Math.sin((i * 2 * Math.PI) / 3 + 2 * Math.PI) * 70],
               opacity: [0.5, 1, 0.5],
             }}
-            transition={{ duration: 3, repeat: Infinity, ease: "linear", delay: i * 0.4 }}
+            transition={{ duration: 3, repeat: Infinity, ease: "linear" as const, delay: i * 0.4 }}
           />
         ))}
       </motion.div>
 
+      {/* Progress % */}
+      <p className="text-6xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-blue-600 mb-4">
+        {progress}%
+      </p>
+
       {/* Status */}
       <AnimatePresence mode="wait">
         <motion.p key={statusMessage} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
-          className="text-2xl font-bold text-gray-700 mb-6 text-center"
+          className="text-xl font-semibold text-gray-500 mb-8 text-center"
         >
           {statusMessage || "AIが分析中..."}
         </motion.p>
       </AnimatePresence>
 
       {/* Progress bar */}
-      <div className="w-96 h-2 bg-gray-200 rounded-full overflow-hidden mb-10">
+      <div className="w-[28rem] h-3 bg-gray-200 rounded-full overflow-hidden">
         <motion.div className="h-full bg-gradient-to-r from-purple-500 to-blue-500 rounded-full"
-          animate={{ x: ["-100%", "100%"] }} transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
-          style={{ width: "50%" }}
+          animate={{ width: `${progress}%` }}
+          transition={{ duration: 0.5, ease: "easeOut" as const }}
         />
       </div>
-
-      {/* Streaming reasoning */}
-      {reasoning && (
-        <div className="w-full max-w-3xl">
-          <Card className="border-0 shadow-xl">
-            <CardContent className="p-8">
-              <div className="flex gap-5">
-                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-purple-500 to-blue-500 text-white text-2xl shadow-md">✨</div>
-                <div className="flex-1">
-                  <p className="text-lg font-bold text-gray-800 mb-3">AI分析レポート</p>
-                  <div className="rounded-2xl bg-gray-50 border border-gray-200 p-6 max-h-48 overflow-y-auto">
-                    <p className="text-base text-gray-700 whitespace-pre-wrap leading-relaxed">
-                      {reasoning}
-                      {isStreaming && (
-                        <motion.span className="inline-block w-2 h-5 bg-purple-500 ml-0.5 align-middle rounded-sm"
-                          animate={{ opacity: [1, 0] }} transition={{ duration: 0.5, repeat: Infinity }}
-                        />
-                      )}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
     </div>
   );
 }
 
 // ━━━━━━━━━━━━━━━━━━━━
-// Step 3: Result
+// Step 3: Result — Gantt always visible, plan selector, compare mode
 // ━━━━━━━━━━━━━━━━━━━━
 function Step3Result(props: {
   proposals: ScheduleProposal[] | null;
   error: string | null;
   simState: string;
   days: import("@/lib/types").WeatherDay[];
-  expandedPlan: string | null;
-  setExpandedPlan: (v: string | null) => void;
+  selectedPlanId: string | null;
+  setSelectedPlanId: (v: string | null) => void;
+  compareMode: boolean;
+  setCompareMode: (v: boolean) => void;
+  comparePlanIds: [string, string] | null;
+  setComparePlanIds: (v: [string, string] | null) => void;
   adoptedId: string | null;
   onAdopt: (p: ScheduleProposal) => void;
   onRestart: () => void;
@@ -510,23 +496,16 @@ function Step3Result(props: {
 
   if (!props.proposals) return null;
 
+  const selected = props.proposals.find((p) => p.id === props.selectedPlanId) || props.proposals[1];
+  const compareA = props.comparePlanIds ? props.proposals.find((p) => p.id === props.comparePlanIds![0]) : null;
+  const compareB = props.comparePlanIds ? props.proposals.find((p) => p.id === props.comparePlanIds![1]) : null;
+
   return (
     <div>
-      {/* Header */}
-      <div className="text-center mb-10">
-        <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 200, damping: 15 }}
-          className="inline-flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-to-br from-purple-500 to-blue-600 shadow-xl shadow-purple-200/50 mb-6"
-        >
-          <CheckCircle2 size={40} className="text-white" />
-        </motion.div>
-        <h1 className="text-4xl font-extrabold text-gray-900 mb-3">3つのプラン提案</h1>
-        <p className="text-xl text-gray-500">AIが天気予報と工程の依存関係を分析して生成しました</p>
-      </div>
-
       {/* Adopted toast */}
       {props.adoptedId && (
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-          className="rounded-2xl bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200 p-6 flex items-center justify-between mb-10"
+          className="rounded-2xl bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200 p-6 flex items-center justify-between mb-8"
         >
           <div className="flex items-center gap-4">
             <div className="flex h-14 w-14 items-center justify-center rounded-full bg-green-500 text-white shadow-md"><Check size={28} /></div>
@@ -543,89 +522,164 @@ function Step3Result(props: {
         </motion.div>
       )}
 
-      {/* 3 Plans */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-10">
-        {props.proposals.map((proposal, idx) => {
-          const meta = planMeta[proposal.type];
-          const Icon = meta.icon;
-          const isAdopted = props.adoptedId === proposal.id;
-          const isExpanded = props.expandedPlan === proposal.id;
-          const risk = riskMap[proposal.riskLevel];
-          const isRecommended = idx === 1;
+      {/* Plan selector tabs */}
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex gap-3">
+          {props.proposals.map((proposal, idx) => {
+            const meta = planMeta[proposal.type];
+            const Icon = meta.icon;
+            const isActive = !props.compareMode && selected.id === proposal.id;
+            const isAdopted = props.adoptedId === proposal.id;
+            const isRecommended = idx === 1;
 
-          return (
-            <motion.div key={proposal.id} initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, delay: idx * 0.15 }} className="space-y-4"
-            >
-              <Card className={`relative overflow-hidden transition-all duration-300 ${isAdopted ? "ring-3 ring-green-500 shadow-xl shadow-green-100" : "hover:shadow-xl hover:-translate-y-1"} ${meta.border} border-2`}>
+            return (
+              <button key={proposal.id}
+                onClick={() => { props.setSelectedPlanId(proposal.id); props.setCompareMode(false); props.setComparePlanIds(null); }}
+                className={`relative flex items-center gap-3 rounded-2xl border-2 px-5 py-4 transition-all duration-200 ${
+                  isActive ? `${meta.border} ${meta.bg} shadow-md` : "border-gray-200 bg-white hover:border-gray-300 hover:shadow-sm"
+                }`}
+              >
+                <div className={`flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br ${meta.color} text-white`}>
+                  <Icon size={20} />
+                </div>
+                <div className="text-left">
+                  <p className="text-base font-bold text-gray-900">{proposal.name}</p>
+                  <p className="text-sm text-gray-500">{proposal.totalDays}日 ・ +{proposal.impactDays}日 ・ {proposal.impactCost}万円</p>
+                </div>
                 {isRecommended && !props.adoptedId && (
-                  <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-center py-2.5 text-base font-bold tracking-wide">
-                    おすすめ
-                  </div>
+                  <Badge className="bg-blue-600 text-white text-[11px] absolute -top-2 right-2">おすすめ</Badge>
                 )}
                 {isAdopted && (
-                  <div className="bg-gradient-to-r from-green-500 to-emerald-500 text-white text-center py-2.5 text-base font-bold tracking-wide flex items-center justify-center gap-2">
-                    <Check size={18} /> 採用済み
-                  </div>
+                  <Badge className="bg-green-500 text-white text-[11px] absolute -top-2 right-2"><Check size={12} className="mr-0.5" />採用</Badge>
                 )}
-
-                <CardContent className="p-8">
-                  <div className="flex items-center gap-4 mb-6">
-                    <div className={`flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br ${meta.color} text-white shadow-lg`}>
-                      <Icon size={32} />
-                    </div>
-                    <div>
-                      <h3 className="text-2xl font-extrabold text-gray-900">{proposal.name}</h3>
-                      <Badge className={`${risk.cls} text-sm mt-1`}>リスク: {risk.label}</Badge>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-3 gap-4 mb-6">
-                    <StatBox icon={<Clock size={18} className="text-gray-400" />} label="工期" value={`${proposal.totalDays}日`} />
-                    <StatBox icon={<CalendarDays size={18} className="text-gray-400" />} label="遅延" value={`+${proposal.impactDays}日`} />
-                    <StatBox icon={<Wallet size={18} className="text-gray-400" />} label="コスト" value={`${proposal.impactCost}万`} />
-                  </div>
-
-                  <p className="text-base text-gray-600 leading-relaxed mb-6">{proposal.summary}</p>
-
-                  <div className="space-y-3">
-                    {!isAdopted && (
-                      <Button onClick={() => props.onAdopt(proposal)}
-                        className={`w-full bg-gradient-to-r ${meta.color} hover:opacity-90 text-white gap-2 text-lg py-6 rounded-xl shadow-md`}
-                      >
-                        <Check size={22} /> このプランを採用
-                      </Button>
-                    )}
-                    <Button variant="outline" className="w-full gap-2 text-base py-5 rounded-xl"
-                      onClick={() => props.setExpandedPlan(isExpanded ? null : proposal.id)}
-                    >
-                      {isExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />} 工程の詳細を見る
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {isExpanded && (
-                <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }}>
-                  <Card className="border-2 shadow-md">
-                    <CardContent className="p-5">
-                      <p className="text-base font-bold text-gray-700 mb-3">工程ガントチャート</p>
-                      <GanttChart processes={proposal.schedule} weatherDays={props.days} compact />
-                    </CardContent>
-                  </Card>
-                </motion.div>
-              )}
-            </motion.div>
-          );
-        })}
-      </div>
-
-      {/* Restart */}
-      <div className="flex justify-center">
-        <Button variant="outline" size="lg" className="text-lg px-10 py-6 rounded-xl gap-2" onClick={props.onRestart}>
-          <ArrowLeft size={20} /> 条件を変えてもう一度
+              </button>
+            );
+          })}
+        </div>
+        <Button variant={props.compareMode ? "default" : "outline"} className="gap-2 rounded-xl"
+          onClick={() => {
+            if (!props.compareMode) {
+              props.setCompareMode(true);
+              props.setComparePlanIds([props.proposals![0].id, props.proposals![1].id]);
+            } else {
+              props.setCompareMode(false);
+              props.setComparePlanIds(null);
+            }
+          }}
+        >
+          <Scale size={18} /> 比較モード
         </Button>
       </div>
+
+      {/* Compare mode selector */}
+      {props.compareMode && props.comparePlanIds && (
+        <div className="flex items-center gap-4 mb-6 p-4 rounded-xl bg-blue-50 border border-blue-200">
+          <span className="text-base font-semibold text-blue-700">比較:</span>
+          {[0, 1].map((slot) => (
+            <div key={slot} className="flex gap-2">
+              {props.proposals!.map((p) => {
+                const meta = planMeta[p.type];
+                const Icon = meta.icon;
+                const isSelected = props.comparePlanIds![slot] === p.id;
+                return (
+                  <button key={p.id}
+                    onClick={() => {
+                      const next = [...props.comparePlanIds!] as [string, string];
+                      next[slot] = p.id;
+                      props.setComparePlanIds(next);
+                    }}
+                    className={`flex items-center gap-2 rounded-lg border-2 px-3 py-2 text-sm transition-all ${
+                      isSelected ? `${meta.border} ${meta.bg}` : "border-gray-200 bg-white"
+                    }`}
+                  >
+                    <Icon size={16} /> {p.name}
+                  </button>
+                );
+              })}
+              {slot === 0 && <span className="text-gray-400 font-bold self-center mx-2">vs</span>}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Main Gantt chart area */}
+      {!props.compareMode ? (
+        <Card className="mb-8 border-2 shadow-lg overflow-hidden">
+          <div className={`bg-gradient-to-r ${planMeta[selected.type].color} px-6 py-4 flex items-center justify-between`}>
+            <div className="flex items-center gap-3">
+              {(() => { const Icon = planMeta[selected.type].icon; return <Icon size={24} className="text-white" />; })()}
+              <h2 className="text-xl font-bold text-white">{selected.name}</h2>
+              <Badge className={`${riskMap[selected.riskLevel].cls} text-sm`}>リスク: {riskMap[selected.riskLevel].label}</Badge>
+            </div>
+            <div className="flex items-center gap-6 text-white text-base font-semibold">
+              <span><Clock size={16} className="inline mr-1" />工期 {selected.totalDays}日</span>
+              <span><CalendarDays size={16} className="inline mr-1" />遅延 +{selected.impactDays}日</span>
+              <span><Wallet size={16} className="inline mr-1" />{selected.impactCost}万円</span>
+            </div>
+          </div>
+          <CardContent className="p-6">
+            <p className="text-base text-gray-600 mb-4">{selected.summary}</p>
+            <GanttChart processes={selected.schedule} weatherDays={props.days} />
+          </CardContent>
+          <div className="border-t border-gray-200 px-6 py-4 flex justify-between">
+            {!props.adoptedId || props.adoptedId !== selected.id ? (
+              <Button onClick={() => props.onAdopt(selected)}
+                className={`bg-gradient-to-r ${planMeta[selected.type].color} hover:opacity-90 text-white gap-2 text-lg px-8 py-5 rounded-xl shadow-md`}
+              >
+                <Check size={22} /> このプランを採用してカレンダーに登録
+              </Button>
+            ) : (
+              <div className="flex items-center gap-2 text-green-600 font-bold text-lg"><Check size={22} /> 採用済み</div>
+            )}
+            <Button variant="outline" className="gap-2 text-base rounded-xl" onClick={props.onRestart}>
+              <ArrowLeft size={18} /> 条件を変えてもう一度
+            </Button>
+          </div>
+        </Card>
+      ) : (
+        /* Compare mode: side by side */
+        compareA && compareB && (
+          <div className="grid grid-cols-2 gap-6 mb-8">
+            {[compareA, compareB].map((plan) => (
+              <Card key={plan.id} className={`border-2 ${planMeta[plan.type].border} shadow-md overflow-hidden`}>
+                <div className={`bg-gradient-to-r ${planMeta[plan.type].color} px-5 py-3 flex items-center gap-3`}>
+                  {(() => { const Icon = planMeta[plan.type].icon; return <Icon size={20} className="text-white" />; })()}
+                  <h3 className="text-lg font-bold text-white">{plan.name}</h3>
+                  <div className="ml-auto flex gap-4 text-white text-sm font-semibold">
+                    <span>{plan.totalDays}日</span>
+                    <span>+{plan.impactDays}日</span>
+                    <span>{plan.impactCost}万円</span>
+                  </div>
+                </div>
+                <CardContent className="p-4">
+                  <p className="text-sm text-gray-600 mb-3">{plan.summary}</p>
+                  <GanttChart processes={plan.schedule} weatherDays={props.days} compact />
+                </CardContent>
+                <div className="border-t px-4 py-3">
+                  {props.adoptedId !== plan.id ? (
+                    <Button onClick={() => props.onAdopt(plan)} size="lg"
+                      className={`w-full bg-gradient-to-r ${planMeta[plan.type].color} text-white gap-2 rounded-xl`}
+                    >
+                      <Check size={18} /> 採用
+                    </Button>
+                  ) : (
+                    <div className="text-center text-green-600 font-bold py-2"><Check size={18} className="inline mr-1" />採用済み</div>
+                  )}
+                </div>
+              </Card>
+            ))}
+          </div>
+        )
+      )}
+
+      {/* Restart (only in compare mode - single mode has it inside the card) */}
+      {props.compareMode && (
+        <div className="flex justify-center">
+          <Button variant="outline" size="lg" className="text-lg px-10 py-6 rounded-xl gap-2" onClick={props.onRestart}>
+            <ArrowLeft size={20} /> 条件を変えてもう一度
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

@@ -3,21 +3,34 @@
 import { useState, useCallback, useRef } from "react";
 import { ScheduleProposal, SimulationState, SimulationMode, Site, WeatherDay } from "@/lib/types";
 
+const STATUS_PROGRESS: Record<string, number> = {
+  "AIエンジンを起動中...": 5,
+  "天気データを分析中...": 20,
+  "工程の依存関係を確認中...": 40,
+  "3つのプランを生成中...": 60,
+  "提案を最終調整中...": 80,
+  "緊急天気変更を検知...": 15,
+  "残工程を確認中...": 35,
+  "代替スケジュールを計算中...": 55,
+  "リスケ提案を生成中...": 75,
+  "最適スケジュールを計算中...": 65,
+};
+
 export function useAISimulation() {
   const [state, setState] = useState<SimulationState>("idle");
   const [statusMessage, setStatusMessage] = useState("");
-  const [reasoning, setReasoning] = useState("");
+  const [progress, setProgress] = useState(0);
   const [proposals, setProposals] = useState<ScheduleProposal[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
 
   const reset = useCallback(() => {
     abortRef.current?.abort();
-    setState("idle"); setStatusMessage(""); setReasoning(""); setProposals(null); setError(null);
+    setState("idle"); setStatusMessage(""); setProgress(0); setProposals(null); setError(null);
   }, []);
 
   const run = useCallback((site: Site, weather: WeatherDay[], mode: SimulationMode) => {
-    setState("thinking"); setStatusMessage("AIエンジンを起動中..."); setReasoning(""); setProposals(null); setError(null);
+    setState("thinking"); setStatusMessage("AIエンジンを起動中..."); setProgress(5); setProposals(null); setError(null);
     const controller = new AbortController(); abortRef.current = controller;
     const endpoint = mode === "optimize" ? "/api/ai/optimize" : "/api/ai/reschedule";
 
@@ -40,14 +53,16 @@ export function useAISimulation() {
           if (!line.trim()) continue;
           try {
             const ev = JSON.parse(line);
-            if (ev.type === "status") setStatusMessage(ev.data);
-            else if (ev.type === "reasoning_chunk") { setState("streaming"); setReasoning((p) => p + ev.data); }
-            else if (ev.type === "proposals") { setState("complete"); setProposals(ev.data); }
-            else if (ev.type === "result") {
-              // Backward compat: single result → wrap in proposals
-              setState("complete");
-              setProposals(ev.data.proposals || null);
+            if (ev.type === "status") {
+              setStatusMessage(ev.data);
+              setProgress(STATUS_PROGRESS[ev.data] || 50);
             }
+            else if (ev.type === "reasoning_chunk") {
+              // Still receive but don't expose - just bump progress
+              setProgress((p) => Math.min(p + 1, 90));
+            }
+            else if (ev.type === "proposals") { setProgress(100); setState("complete"); setProposals(ev.data); }
+            else if (ev.type === "result") { setProgress(100); setState("complete"); setProposals(ev.data.proposals || null); }
             else if (ev.type === "error") { setState("error"); setError(ev.data.message); }
           } catch { /* skip */ }
         }
@@ -58,5 +73,5 @@ export function useAISimulation() {
     });
   }, []);
 
-  return { state, statusMessage, reasoning, proposals, error, run, reset };
+  return { state, statusMessage, progress, proposals, error, run, reset };
 }
