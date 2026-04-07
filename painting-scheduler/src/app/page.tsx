@@ -15,6 +15,7 @@ import {
   CalendarDays,
   Ruler,
   Building2,
+  Layers,
   Clock,
   Wallet,
   ArrowRight,
@@ -61,9 +62,10 @@ const riskMap = { low: { label: "低", cls: "bg-green-100 text-green-700" }, med
 
 const pageTransition = { initial: { opacity: 0, y: 24 }, animate: { opacity: 1, y: 0 }, exit: { opacity: 0, y: -24 }, transition: { duration: 0.35, ease: "easeInOut" as const } };
 
-function buildProcesses(startDate: string): SiteProcess[] {
+function buildProcesses(startDate: string, selectedIds: number[]): SiteProcess[] {
+  const selected = processMasters.filter((m) => selectedIds.includes(m.id));
   let cur = new Date(startDate);
-  return processMasters.map((m) => {
+  return selected.map((m) => {
     const s = new Date(cur);
     const e = addBusinessDays(s, m.durationDays + m.dryingDays);
     const p: SiteProcess = { ...m, status: "pending", scheduledStart: s.toISOString().split("T")[0], scheduledEnd: e.toISOString().split("T")[0] };
@@ -91,6 +93,7 @@ export default function Dashboard() {
   const [startDate, setStartDate] = useState("2026-04-14");
   const [ownerName, setOwnerName] = useState("");
   const [useExisting, setUseExisting] = useState("");
+  const [selectedProcessIds, setSelectedProcessIds] = useState<number[]>(processMasters.map((m) => m.id));
   const [showOptions, setShowOptions] = useState(false);
   const [priority, setPriority] = useState<"speed" | "cost" | "quality">("quality");
   const [avoidWeekends, setAvoidWeekends] = useState(false);
@@ -115,11 +118,15 @@ export default function Dashboard() {
     setUseExisting(siteId);
   };
 
+  const toggleProcess = (id: number) => {
+    setSelectedProcessIds((prev) => prev.includes(id) ? prev.filter((p) => p !== id) : [...prev, id].sort((a, b) => a - b));
+  };
+
   const handleSimulate = () => {
     const site: Site = {
       id: useExisting || "custom-site", name: siteName || "新規現場", address: address || "大阪府", ownerName: ownerName || "施主",
       buildingType, paintArea: Number(paintArea) || 150, startDate, status: "scheduled",
-      processes: useExisting ? sampleSites.find((s) => s.id === useExisting)?.processes || buildProcesses(startDate) : buildProcesses(startDate),
+      processes: buildProcesses(startDate, selectedProcessIds),
     };
     sim.reset(); setAdoptedId(null); setSelectedPlanId(null); setCompareMode(false); setComparePlanIds(null);
     sim.run(site, days, "optimize");
@@ -153,7 +160,8 @@ export default function Dashboard() {
               buildingType={buildingType} setBuildingType={setBuildingType}
               paintArea={paintArea} setPaintArea={setPaintArea}
               startDate={startDate} setStartDate={setStartDate}
-              useExisting={useExisting} handlePreset={handlePreset} setUseExisting={setUseExisting}
+              selectedProcessIds={selectedProcessIds} toggleProcess={toggleProcess}
+              setSelectedProcessIds={setSelectedProcessIds}
               showOptions={showOptions} setShowOptions={setShowOptions}
               priority={priority} setPriority={setPriority}
               avoidWeekends={avoidWeekends} setAvoidWeekends={setAvoidWeekends}
@@ -238,7 +246,8 @@ function Step1Input(props: {
   buildingType: BuildingType; setBuildingType: (v: BuildingType) => void;
   paintArea: string; setPaintArea: (v: string) => void;
   startDate: string; setStartDate: (v: string) => void;
-  useExisting: string; handlePreset: (id: string) => void; setUseExisting: (v: string) => void;
+  selectedProcessIds: number[]; toggleProcess: (id: number) => void;
+  setSelectedProcessIds: (ids: number[]) => void;
   showOptions: boolean; setShowOptions: (v: boolean) => void;
   priority: "speed" | "cost" | "quality"; setPriority: (v: "speed" | "cost" | "quality") => void;
   avoidWeekends: boolean; setAvoidWeekends: (v: boolean) => void;
@@ -246,6 +255,8 @@ function Step1Input(props: {
   alertDays: { date: string; weather: import("@/lib/types").WeatherType }[];
   onSubmit: () => void;
 }) {
+  const allSelected = props.selectedProcessIds.length === processMasters.length;
+
   return (
     <div>
       {/* Hero */}
@@ -257,8 +268,8 @@ function Step1Input(props: {
           スケジュールシミュレーター
         </h1>
         <p className="text-xl text-gray-500 max-w-2xl mx-auto">
-          施工内容を入力するだけで、AIが天気予報を分析し<br className="hidden sm:block" />
-          最適な工程プランを3つ提案します
+          現場データを確認し、施工する工程を選んで<br className="hidden sm:block" />
+          AIが天気予報に基づく最適プランを3つ提案します
         </p>
       </div>
 
@@ -278,52 +289,26 @@ function Step1Input(props: {
         <ArrowRight size={24} className="text-emerald-500 group-hover:translate-x-1 transition-transform" />
       </Link>
 
-      {/* Preset */}
-      <div className="mb-10">
-        <h2 className="text-xl font-bold text-gray-900 mb-4">現場を選択</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-          {sampleSites.map((site) => (
-            <button key={site.id} onClick={() => props.handlePreset(site.id)}
-              className={`relative rounded-2xl border-2 p-6 text-left transition-all duration-200 ${
-                props.useExisting === site.id ? "border-blue-500 bg-blue-50 shadow-lg shadow-blue-100/50" : "border-gray-200 bg-white hover:border-blue-300 hover:shadow-md"
-              }`}
-            >
-              {props.useExisting === site.id && (
-                <div className="absolute -top-2.5 -right-2.5 flex h-7 w-7 items-center justify-center rounded-full bg-blue-600 text-white shadow-md"><Check size={16} /></div>
-              )}
-              <div className="flex items-center gap-4">
-                <span className="text-5xl">{getBuildingTypeIcon(site.buildingType)}</span>
-                <div>
-                  <p className="text-lg font-bold text-gray-900">{site.name}</p>
-                  <p className="text-base text-gray-500">{site.address}</p>
-                  <p className="text-sm text-gray-400 mt-1">{site.paintArea}m²</p>
-                </div>
-              </div>
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Form */}
-      <Card className="mb-10 border-2 border-gray-200 shadow-sm overflow-hidden">
+      {/* ━━━ Section 1: 現場データ ━━━ */}
+      <Card className="mb-8 border-2 border-gray-200 shadow-sm overflow-hidden">
         <div className="bg-gray-50 border-b border-gray-200 px-8 py-4">
-          <h2 className="text-lg font-bold text-gray-700">施工の詳細</h2>
+          <h2 className="text-lg font-bold text-gray-700 flex items-center gap-2">
+            <Building2 size={20} className="text-blue-600" /> 現場データ
+          </h2>
         </div>
         <CardContent className="p-8">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
             <InputField icon={<MapPin size={18} />} label="現場名" value={props.siteName}
-              onChange={(v) => { props.setSiteName(v); props.setUseExisting(""); }} placeholder="例: 高石市 田中邸" />
+              onChange={(v) => props.setSiteName(v)} placeholder="例: 高石市 田中邸" />
             <InputField icon={<MapPin size={18} />} label="住所" value={props.address}
-              onChange={(v) => { props.setAddress(v); props.setUseExisting(""); }} placeholder="例: 大阪府高石市取石3丁目" />
+              onChange={(v) => props.setAddress(v)} placeholder="例: 大阪府高石市取石3丁目" />
             <InputField icon={<Building2 size={18} />} label="施主名" value={props.ownerName}
               onChange={(v) => props.setOwnerName(v)} placeholder="例: 田中 太郎" />
           </div>
 
-          {/* Building type cards */}
+          {/* Building type */}
           <div className="mb-8">
-            <label className="flex items-center gap-2 text-base font-semibold text-gray-700 mb-3">
-              <Building2 size={18} className="text-gray-400" /> 建物種別
-            </label>
+            <label className="flex items-center gap-2 text-base font-semibold text-gray-700 mb-3">建物種別</label>
             <div className="grid grid-cols-3 gap-4">
               {([
                 { value: "house" as const, icon: "🏠", label: "戸建て住宅", desc: "一般住宅の外壁塗装" },
@@ -350,76 +335,124 @@ function Step1Input(props: {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             <InputField icon={<Ruler size={18} />} label="塗装面積（m²）" value={props.paintArea}
               onChange={(v) => props.setPaintArea(v)} placeholder="150" type="number" />
             <InputField icon={<CalendarDays size={18} />} label="開始予定日" value={props.startDate}
               onChange={(v) => props.setStartDate(v)} type="date" />
           </div>
-
-          {/* Options */}
-          <button onClick={() => props.setShowOptions(!props.showOptions)}
-            className="flex items-center gap-2 text-base font-semibold text-purple-600 hover:text-purple-700 mb-4 transition-colors"
-          >
-            <Settings2 size={20} /> オプション設定
-            {props.showOptions ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
-          </button>
-
-          {props.showOptions && (
-            <div className="rounded-2xl bg-purple-50/50 border border-purple-100 p-6 mb-6 space-y-5">
-              <div>
-                <label className="text-base font-semibold text-gray-700 mb-3 block">優先事項</label>
-                <div className="grid grid-cols-3 gap-3">
-                  {([["speed", "🚀 スピード重視", "工期を最短に"], ["cost", "💰 コスト重視", "追加費用を最小に"], ["quality", "✨ 品質重視", "天候リスクを最小に"]] as const).map(
-                    ([val, label, desc]) => (
-                      <button key={val} onClick={() => props.setPriority(val)}
-                        className={`rounded-xl border-2 p-4 text-left transition-all ${
-                          props.priority === val ? "border-purple-500 bg-purple-50" : "border-gray-200 bg-white hover:border-purple-300"
-                        }`}
-                      >
-                        <p className="text-base font-bold text-gray-900">{label}</p>
-                        <p className="text-sm text-gray-500">{desc}</p>
-                      </button>
-                    )
-                  )}
-                </div>
-              </div>
-              <div className="flex items-center justify-between py-2">
-                <div><p className="text-base font-semibold text-gray-700">土日を避ける</p><p className="text-sm text-gray-500">近隣への配慮で土日の作業を避けます</p></div>
-                <Switch checked={props.avoidWeekends} onCheckedChange={props.setAvoidWeekends} />
-              </div>
-              <div className="flex items-center justify-between py-2">
-                <div><p className="text-base font-semibold text-gray-700">バッファ日を含める</p><p className="text-sm text-gray-500">予備日を追加してスケジュールに余裕を持たせます</p></div>
-                <Switch checked={props.includeBuffer} onCheckedChange={props.setIncludeBuffer} />
-              </div>
-            </div>
-          )}
-
-          {/* Weather alert */}
-          {props.alertDays.length > 0 && (
-            <div className="rounded-2xl bg-amber-50 border border-amber-200 p-5 flex items-start gap-4">
-              <CloudRain size={24} className="text-amber-500 shrink-0 mt-0.5" />
-              <div>
-                <p className="text-base font-bold text-amber-800">天気予報: {props.alertDays.length}日間の施工不可日を検出</p>
-                <div className="flex gap-2 flex-wrap mt-2">
-                  {props.alertDays.slice(0, 5).map((d) => (
-                    <span key={d.date} className="inline-flex items-center gap-1 bg-amber-100 rounded-lg px-3 py-1.5 text-sm font-medium text-amber-700">
-                      {getWeatherEmoji(d.weather)} {formatDateFull(d.date)}
-                    </span>
-                  ))}
-                  {props.alertDays.length > 5 && <span className="text-sm text-amber-600 self-center">他{props.alertDays.length - 5}日</span>}
-                </div>
-              </div>
-            </div>
-          )}
         </CardContent>
       </Card>
 
+      {/* ━━━ Section 2: 施工工程の選択 ━━━ */}
+      <Card className="mb-8 border-2 border-gray-200 shadow-sm overflow-hidden">
+        <div className="bg-gray-50 border-b border-gray-200 px-8 py-4 flex items-center justify-between">
+          <h2 className="text-lg font-bold text-gray-700 flex items-center gap-2">
+            <Layers size={20} className="text-purple-600" /> 施工する工程を選択
+            <Badge className="bg-purple-100 text-purple-700 ml-2">{props.selectedProcessIds.length}/{processMasters.length}</Badge>
+          </h2>
+          <button onClick={() => props.setSelectedProcessIds(allSelected ? [] : processMasters.map((m) => m.id))}
+            className="text-base font-semibold text-purple-600 hover:text-purple-700"
+          >
+            {allSelected ? "すべて解除" : "すべて選択"}
+          </button>
+        </div>
+        <CardContent className="p-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {processMasters.map((proc) => {
+              const isSelected = props.selectedProcessIds.includes(proc.id);
+              const rainIcon = proc.rainTolerance === "ok" ? "✅" : proc.rainTolerance === "partial" ? "⚠️" : "🚫";
+              return (
+                <button key={proc.id} onClick={() => props.toggleProcess(proc.id)}
+                  className={`flex items-center gap-4 rounded-xl border-2 p-4 text-left transition-all duration-200 ${
+                    isSelected ? "border-purple-400 bg-purple-50/50 shadow-sm" : "border-gray-200 bg-white hover:border-gray-300 opacity-60"
+                  }`}
+                >
+                  <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-base font-extrabold ${
+                    isSelected ? "bg-purple-600 text-white" : "bg-gray-200 text-gray-400"
+                  }`}>
+                    {isSelected ? <Check size={20} /> : proc.id}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-base font-bold text-gray-900">{proc.name}</p>
+                    <p className="text-sm text-gray-500 truncate">{proc.description}</p>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span className="text-base">{rainIcon}</span>
+                    <span className="text-sm text-gray-400">{proc.durationDays}日{proc.dryingDays > 0 ? `+乾${proc.dryingDays}日` : ""}</span>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* ━━━ Section 3: オプション ━━━ */}
+      <Card className="mb-8 border-2 border-gray-200 shadow-sm overflow-hidden">
+        <button onClick={() => props.setShowOptions(!props.showOptions)}
+          className="w-full bg-gray-50 border-b border-gray-200 px-8 py-4 flex items-center justify-between text-left"
+        >
+          <h2 className="text-lg font-bold text-gray-700 flex items-center gap-2">
+            <Settings2 size={20} className="text-gray-500" /> オプション設定
+          </h2>
+          {props.showOptions ? <ChevronUp size={20} className="text-gray-400" /> : <ChevronDown size={20} className="text-gray-400" />}
+        </button>
+
+        {props.showOptions && (
+          <CardContent className="p-8 space-y-6">
+            <div>
+              <label className="text-base font-semibold text-gray-700 mb-3 block">優先事項</label>
+              <div className="grid grid-cols-3 gap-3">
+                {([["speed", "🚀 スピード重視", "工期を最短に"], ["cost", "💰 コスト重視", "追加費用を最小に"], ["quality", "✨ 品質重視", "天候リスクを最小に"]] as const).map(
+                  ([val, label, desc]) => (
+                    <button key={val} onClick={() => props.setPriority(val)}
+                      className={`rounded-xl border-2 p-4 text-left transition-all ${
+                        props.priority === val ? "border-purple-500 bg-purple-50" : "border-gray-200 bg-white hover:border-purple-300"
+                      }`}
+                    >
+                      <p className="text-base font-bold text-gray-900">{label}</p>
+                      <p className="text-sm text-gray-500">{desc}</p>
+                    </button>
+                  )
+                )}
+              </div>
+            </div>
+            <div className="flex items-center justify-between py-2">
+              <div><p className="text-base font-semibold text-gray-700">土日を避ける</p><p className="text-sm text-gray-500">近隣への配慮で土日の作業を避けます</p></div>
+              <Switch checked={props.avoidWeekends} onCheckedChange={props.setAvoidWeekends} />
+            </div>
+            <div className="flex items-center justify-between py-2">
+              <div><p className="text-base font-semibold text-gray-700">バッファ日を含める</p><p className="text-sm text-gray-500">予備日を追加してスケジュールに余裕を持たせます</p></div>
+              <Switch checked={props.includeBuffer} onCheckedChange={props.setIncludeBuffer} />
+            </div>
+          </CardContent>
+        )}
+      </Card>
+
+      {/* Weather alert */}
+      {props.alertDays.length > 0 && (
+        <div className="rounded-2xl bg-amber-50 border border-amber-200 p-5 flex items-start gap-4 mb-8">
+          <CloudRain size={24} className="text-amber-500 shrink-0 mt-0.5" />
+          <div>
+            <p className="text-base font-bold text-amber-800">天気予報: {props.alertDays.length}日間の施工不可日を検出</p>
+            <div className="flex gap-2 flex-wrap mt-2">
+              {props.alertDays.slice(0, 5).map((d) => (
+                <span key={d.date} className="inline-flex items-center gap-1 bg-amber-100 rounded-lg px-3 py-1.5 text-sm font-medium text-amber-700">
+                  {getWeatherEmoji(d.weather)} {formatDateFull(d.date)}
+                </span>
+              ))}
+              {props.alertDays.length > 5 && <span className="text-sm text-amber-600 self-center">他{props.alertDays.length - 5}日</span>}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Submit */}
-      <Button onClick={props.onSubmit} size="lg"
-        className="w-full bg-gradient-to-r from-purple-600 via-blue-600 to-indigo-600 hover:from-purple-700 hover:via-blue-700 hover:to-indigo-700 text-white gap-3 text-xl py-8 rounded-2xl shadow-xl shadow-purple-200/40"
+      <Button onClick={props.onSubmit} size="lg" disabled={props.selectedProcessIds.length === 0}
+        className="w-full bg-gradient-to-r from-purple-600 via-blue-600 to-indigo-600 hover:from-purple-700 hover:via-blue-700 hover:to-indigo-700 text-white gap-3 text-xl py-8 rounded-2xl shadow-xl shadow-purple-200/40 disabled:opacity-50"
       >
-        <Sparkles size={26} /> AIでスケジュールを生成
+        <Sparkles size={26} /> {props.selectedProcessIds.length}工程でスケジュールを生成
       </Button>
     </div>
   );
