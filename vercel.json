@@ -1,5 +1,0 @@
-{
-  "installCommand": "cd painting-scheduler && npm install",
-  "buildCommand": "cd painting-scheduler && npm run build",
-  "outputDirectory": "painting-scheduler/.next"
-}
