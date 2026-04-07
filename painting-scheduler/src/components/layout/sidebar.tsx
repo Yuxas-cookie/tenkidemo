@@ -8,6 +8,7 @@ import {
   Cloud,
   Sparkles,
   CalendarDays,
+  FileText,
 } from "lucide-react";
 import { useWeatherMode } from "@/providers/weather-mode-provider";
 import { Switch } from "@/components/ui/switch";
@@ -27,6 +28,7 @@ const navItems = [
   { href: "/sites", label: "現場一覧", icon: Building2 },
   { href: "/weather", label: "天気予報", icon: Cloud },
   { href: "/simulation", label: "AIシミュレーション", icon: Sparkles },
+  { href: "/estimate", label: "見積作成", icon: FileText },
   { href: "/calendar", label: "カレンダー", icon: CalendarDays },
 ];
 

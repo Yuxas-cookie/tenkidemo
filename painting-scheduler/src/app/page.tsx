@@ -262,6 +262,22 @@ function Step1Input(props: {
         </p>
       </div>
 
+      {/* Blueprint link */}
+      <Link href="/estimate"
+        className="flex items-center justify-between rounded-2xl border-2 border-dashed border-emerald-300 bg-emerald-50/50 p-6 mb-10 hover:border-emerald-500 hover:shadow-md transition-all group"
+      >
+        <div className="flex items-center gap-4">
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-md">
+            <FileText size={28} />
+          </div>
+          <div>
+            <p className="text-xl font-bold text-gray-900">設計図から自動入力</p>
+            <p className="text-base text-gray-500">図面をアップロードすると、AIが面積を推定して見積も作成します</p>
+          </div>
+        </div>
+        <ArrowRight size={24} className="text-emerald-500 group-hover:translate-x-1 transition-transform" />
+      </Link>
+
       {/* Preset */}
       <div className="mb-10">
         <h2 className="text-xl font-bold text-gray-900 mb-4">現場を選択</h2>

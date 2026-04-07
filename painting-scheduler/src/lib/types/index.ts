@@ -120,6 +120,37 @@ export interface SiteScheduleState {
   alternativePlans: ScheduleProposal[];
 }
 
+// ===== 見積作成 =====
+export type PaintGrade = "silicon" | "fluorine" | "inorganic";
+
+export interface BlueprintAnalysis {
+  buildingType: BuildingType;
+  floors: number;
+  structure: string;
+  totalFloorArea: number;
+  estimatedPaintArea: number;
+  description: string;
+  notes: string[];
+}
+
+export interface EstimateLineItem {
+  name: string;
+  unitPrice: number;
+  area: number;
+  subtotal: number;
+}
+
+export interface EstimateResult {
+  grade: PaintGrade;
+  gradeLabel: string;
+  lineItems: EstimateLineItem[];
+  subtotal: number;
+  tax: number;
+  total: number;
+  paintArea: number;
+  buildingType: BuildingType;
+}
+
 // ===== v3: 天気オーバーライド =====
 export interface WeatherOverride {
   date: string;
