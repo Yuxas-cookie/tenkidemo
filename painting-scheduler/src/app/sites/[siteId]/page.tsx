@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { sampleSites } from "@/lib/data/sites";
-import { SiteDetailView } from "@/components/site-detail/site-detail-view";
+import { SiteDetailView } from "@/components/sites/site-detail-view";
 
 export default async function SiteDetailPage({
   params,

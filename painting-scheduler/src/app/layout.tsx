@@ -1,18 +1,19 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Inter, Noto_Sans_JP } from "next/font/google";
 import "./globals.css";
-import { Header } from "@/components/layout/header";
+import { Sidebar } from "@/components/layout/sidebar";
 import { WeatherModeProvider } from "@/providers/weather-mode-provider";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const inter = Inter({
+  variable: "--font-inter",
   subsets: ["latin"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const notoSansJP = Noto_Sans_JP({
+  variable: "--font-noto-sans-jp",
   subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800"],
 });
 
 export const metadata: Metadata = {
@@ -29,13 +30,19 @@ export default function RootLayout({
   return (
     <html
       lang="ja"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${inter.variable} ${notoSansJP.variable} h-full`}
     >
-      <body className="min-h-full flex flex-col bg-gray-50">
+      <body className="h-full font-sans antialiased" style={{ fontFamily: "var(--font-noto-sans-jp), var(--font-inter), sans-serif" }}>
         <WeatherModeProvider>
           <TooltipProvider>
-            <Header />
-            <main className="flex-1">{children}</main>
+            <div className="flex h-full">
+              <Sidebar />
+              <main className="ml-72 flex-1 overflow-y-auto bg-gray-50/80">
+                <div className="px-10 py-8">
+                  {children}
+                </div>
+              </main>
+            </div>
           </TooltipProvider>
         </WeatherModeProvider>
       </body>

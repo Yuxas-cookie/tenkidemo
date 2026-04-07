@@ -17,13 +17,11 @@ export function WeatherModeProvider({ children }: { children: ReactNode }) {
     scenario: "mid_rain",
   });
 
-  const setMode = (mode: WeatherMode) => {
+  const setMode = (mode: WeatherMode) =>
     setWeatherMode((prev) => ({ ...prev, mode }));
-  };
 
-  const setScenario = (scenario: WeatherScenario) => {
+  const setScenario = (scenario: WeatherScenario) =>
     setWeatherMode((prev) => ({ ...prev, scenario }));
-  };
 
   return (
     <WeatherModeContext.Provider value={{ weatherMode, setMode, setScenario }}>
@@ -34,6 +32,8 @@ export function WeatherModeProvider({ children }: { children: ReactNode }) {
 
 export function useWeatherMode() {
   const context = useContext(WeatherModeContext);
-  if (!context) throw new Error("useWeatherMode must be used within WeatherModeProvider");
+  if (!context) {
+    throw new Error("useWeatherMode must be used within WeatherModeProvider");
+  }
   return context;
 }
