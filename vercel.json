@@ -1,3 +1,6 @@
 {
-  "rootDirectory": "painting-scheduler"
+  "buildCommand": "npm run build --prefix painting-scheduler",
+  "installCommand": "npm install --prefix painting-scheduler",
+  "outputDirectory": "painting-scheduler/.next",
+  "framework": "nextjs"
 }
