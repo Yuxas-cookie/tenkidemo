@@ -9,6 +9,7 @@ import {
   Sparkles,
   CalendarDays,
   FileText,
+  Receipt,
 } from "lucide-react";
 import { useWeatherMode } from "@/providers/weather-mode-provider";
 import { Switch } from "@/components/ui/switch";
@@ -29,6 +30,7 @@ const navItems = [
   { href: "/weather", label: "天気予報", icon: Cloud },
   { href: "/simulation", label: "AIシミュレーション", icon: Sparkles },
   { href: "/estimate", label: "見積作成", icon: FileText },
+  { href: "/expenses", label: "経費管理", icon: Receipt },
   { href: "/calendar", label: "カレンダー", icon: CalendarDays },
 ];
 

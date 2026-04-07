@@ -4,6 +4,7 @@ import "./globals.css";
 import { Sidebar } from "@/components/layout/sidebar";
 import { WeatherModeProvider } from "@/providers/weather-mode-provider";
 import { ScheduleProvider } from "@/providers/schedule-provider";
+import { ExpenseProvider } from "@/providers/expense-provider";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
 const inter = Inter({
@@ -36,6 +37,7 @@ export default function RootLayout({
       <body className="h-full font-sans antialiased" style={{ fontFamily: "var(--font-noto-sans-jp), var(--font-inter), sans-serif" }}>
         <WeatherModeProvider>
           <ScheduleProvider>
+          <ExpenseProvider>
           <TooltipProvider>
             <div className="flex h-full">
               <Sidebar />
@@ -46,6 +48,7 @@ export default function RootLayout({
               </main>
             </div>
           </TooltipProvider>
+          </ExpenseProvider>
           </ScheduleProvider>
         </WeatherModeProvider>
       </body>

@@ -151,6 +151,26 @@ export interface EstimateResult {
   buildingType: BuildingType;
 }
 
+// ===== 経費管理 =====
+export type ExpenseCategory = "material" | "transport" | "tool" | "food" | "other";
+
+export interface ExpenseItem {
+  name: string;
+  price: number;
+}
+
+export interface Expense {
+  id: string;
+  date: string;
+  storeName: string;
+  amount: number;
+  category: ExpenseCategory;
+  items: ExpenseItem[];
+  siteId: string | null;
+  receiptImage: string;
+  createdAt: string;
+}
+
 // ===== v3: 天気オーバーライド =====
 export interface WeatherOverride {
   date: string;
