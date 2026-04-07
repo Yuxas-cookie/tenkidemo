@@ -56,69 +56,92 @@ export function GanttChart({ processes, weatherDays, compact = false }: GanttCha
     return map;
   }, [weatherDays]);
 
-  const lw = compact ? "min-w-[140px]" : "min-w-[230px]";
-  const cw = compact ? "min-w-[40px]" : "min-w-[56px]";
-  const rh = compact ? "h-10" : "h-14";
+  // Sizes: compact for comparison view, large for main view
+  const labelW = compact ? 160 : 280;
+  const colW = compact ? 44 : 68;
+  const rowH = compact ? 44 : 56;
+  const barH = compact ? 28 : 40;
+  const barTop = compact ? 8 : 8;
 
   return (
     <ScrollArea className="w-full">
       <div className="min-w-fit">
-        {/* Header */}
-        <div className="flex border-b-2 border-gray-200 bg-gray-50/50">
-          <div className={`${lw} shrink-0 border-r-2 border-gray-200 p-3`}>
-            <span className="text-sm font-bold text-gray-500">工程名</span>
+        {/* Header row */}
+        <div className="flex border-b-2 border-gray-200 bg-gray-50/80 sticky top-0 z-10">
+          <div className="shrink-0 border-r-2 border-gray-200 px-4 py-3 flex items-center" style={{ minWidth: labelW }}>
+            <span className="text-base font-bold text-gray-500">工程名</span>
           </div>
           <div className="flex">
             {dateRange.map((date) => {
               const w = weatherMap.get(date);
               return (
-                <div key={date} className={`${cw} shrink-0 text-center border-r border-gray-100 py-2 ${w && !w.canWork ? "bg-red-50" : ""}`}>
-                  <div className="text-sm font-medium text-gray-500">{formatDate(date)}</div>
-                  {w && <div className={compact ? "text-base" : "text-xl"}>{getWeatherEmoji(w.weather)}</div>}
+                <div key={date}
+                  className={`shrink-0 text-center border-r border-gray-100 py-2 ${w && !w.canWork ? "bg-red-50" : ""}`}
+                  style={{ minWidth: colW }}
+                >
+                  <div className="text-base font-semibold text-gray-600">{formatDate(date)}</div>
+                  {w && <div className={compact ? "text-lg" : "text-2xl"}>{getWeatherEmoji(w.weather)}</div>}
                 </div>
               );
             })}
           </div>
         </div>
 
-        {/* Rows */}
+        {/* Process rows */}
         {processes.map((proc) => {
           const sc = dateToCol(proc.scheduledStart);
           const ec = dateToCol(proc.scheduledEnd);
           const span = ec - sc + 1;
+
           return (
-            <div key={proc.id} className="flex border-b border-gray-100 hover:bg-blue-50/30 transition-colors">
-              <div className={`${lw} shrink-0 border-r-2 border-gray-200 p-3 flex items-center gap-2`}>
-                <span className={compact ? "text-sm" : "text-base"}>{getRainIcon(proc.rainTolerance)}</span>
-                <span className={`${compact ? "text-sm" : "text-base"} font-semibold text-gray-700 truncate`}>{proc.name}</span>
+            <div key={proc.id} className="flex border-b border-gray-100 hover:bg-blue-50/30 transition-colors" style={{ height: rowH }}>
+              {/* Label column */}
+              <div className="shrink-0 border-r-2 border-gray-200 px-4 flex items-center gap-2.5" style={{ minWidth: labelW }}>
+                <span className={compact ? "text-base" : "text-lg"}>{getRainIcon(proc.rainTolerance)}</span>
+                <span className={`${compact ? "text-sm" : "text-base"} font-bold text-gray-800`}>
+                  {proc.name}
+                </span>
                 {!compact && (
                   <Badge className={`${getStatusColor(proc.status)} text-sm ml-auto shrink-0`} variant="secondary">
                     {getStatusLabel(proc.status)}
                   </Badge>
                 )}
               </div>
-              <div className={`flex relative ${rh}`}>
+
+              {/* Timeline columns */}
+              <div className="flex relative" style={{ height: rowH }}>
                 {dateRange.map((date) => {
                   const w = weatherMap.get(date);
-                  return <div key={date} className={`${cw} shrink-0 border-r border-gray-50 ${w && !w.canWork ? "bg-red-50/40" : ""}`} />;
+                  return (
+                    <div key={date}
+                      className={`shrink-0 border-r border-gray-50 ${w && !w.canWork ? "bg-red-50/40" : ""}`}
+                      style={{ minWidth: colW, height: rowH }}
+                    />
+                  );
                 })}
+
+                {/* Process bar */}
                 <Tooltip>
                   <TooltipTrigger
-                    className={`absolute ${compact ? "top-1.5 h-7" : "top-2 h-10"} rounded-lg ${getBarColor(proc.status, proc.aiModified)} shadow-md cursor-pointer flex items-center px-3 hover:brightness-110 transition-all`}
+                    className={`absolute rounded-lg ${getBarColor(proc.status, proc.aiModified)} shadow-md cursor-pointer flex items-center px-3 hover:brightness-110 hover:shadow-lg transition-all`}
                     style={{
-                      left: `calc(${sc} * ${compact ? "40px" : "56px"})`,
-                      width: `calc(${span} * ${compact ? "40px" : "56px"} - 4px)`,
+                      top: barTop,
+                      height: barH,
+                      left: sc * colW,
+                      width: span * colW - 4,
                     }}
                   >
-                    {!compact && <span className="text-sm text-white font-semibold truncate">{proc.name}</span>}
-                    {proc.aiModified && <span className="ml-auto text-sm">✨</span>}
+                    <span className={`${compact ? "text-xs" : "text-sm"} text-white font-bold truncate`}>
+                      {proc.name}
+                    </span>
+                    {proc.aiModified && <span className="ml-auto text-base">✨</span>}
                   </TooltipTrigger>
-                  <TooltipContent side="top" className="max-w-xs">
-                    <p className="font-bold text-base">{proc.name}</p>
-                    <p className="text-sm text-gray-400">{proc.scheduledStart} 〜 {proc.scheduledEnd}</p>
-                    <p className="text-sm mt-1">{proc.description}</p>
+                  <TooltipContent side="top" className="max-w-sm p-4">
+                    <p className="font-bold text-lg">{proc.name}</p>
+                    <p className="text-base text-gray-400 mt-1">{proc.scheduledStart} 〜 {proc.scheduledEnd}</p>
+                    <p className="text-base mt-2">{proc.description}</p>
                     {proc.aiModified && proc.aiReason && (
-                      <p className="text-sm text-purple-400 mt-1">✨ {proc.aiReason}</p>
+                      <p className="text-base text-purple-400 mt-2 font-medium">✨ {proc.aiReason}</p>
                     )}
                   </TooltipContent>
                 </Tooltip>
